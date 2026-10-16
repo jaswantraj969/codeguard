@@ -39,10 +39,10 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [ ] Deployment must run from source or an editable install so `backend/data/` is found (or set `CODEGUARD_DATA_DIR`)
 
 ## Phase 5: optimizer and report
-- [ ] OPT-CONSTEXPR
-- [ ] Report builder: statuses, statistics, policy, sorting, toggles
-- [ ] Token, AST and symbol serialization; `analyze()` entry point
-- [ ] Serialize the AST iteratively and keep the worker result shallow: a long `1 + 1 + …` chain makes a very deep AST, and `json`/`pickle` recurse
+- [x] OPT-CONSTEXPR (maximal literal-only expressions; skips SEM-CONSTCOND conditions and division by zero)
+- [x] Report builder: statuses, statistics, sorting, toggles (`build_report`)
+- [x] Token, AST and symbol serialization; `Report.to_json()` returns JSON text
+- [x] AST serialized iteratively; the worker returns a flat string, so `pickle` never recurses
 
 ## Phase 6: API
 - [ ] Validation, error envelope, 400 handler

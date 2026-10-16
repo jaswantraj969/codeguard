@@ -255,6 +255,7 @@ Analysis must never raise a Python `RecursionError`. Raising `sys.setrecursionli
 |---|---|---|
 | `rule_id` | string | e.g. `SEM-UNUSED` |
 | `severity` | `"error"` \| `"warning"` \| `"suggestion"` | |
+| `stage` | `"lexical"` \| `"syntax"` \| `"semantic"` \| `"optimizer"` | The stage that produced it. Lets the UI show syntax-stage errors separately |
 | `message` | string | One line, names the identifier or value involved |
 | `line`, `column` | int | 1-based start position |
 | `end_line`, `end_column` | int \| null | End position, exclusive (one past the last character) |
@@ -420,7 +421,7 @@ This is a semantic **constraint check**, not a syntax error. The code matches th
 | Timeout | 5 s per analysis (`ANALYSIS_TIMEOUT_SECONDS`) | Analyses run in a small **pool of long-lived worker processes** (the `pebble` library), not a fresh process per request. The pool size equals the concurrency limit. A worker that times out is killed and replaced. A CPU-bound thread can't be killed, so a thread pool isn't enough. The response is 503 `ANALYSIS_TIMEOUT`. |
 | Concurrency | 2 simultaneous analyses (`MAX_CONCURRENT_ANALYSES`), limited by a semaphore. The default matches the 512 MB free host. | A request waits up to 3 s (`QUEUE_WAIT_SECONDS`) for a free slot, then gets 503 `SERVICE_UNAVAILABLE` with `Retry-After`. |
 | Rate limit | 30 analyses per minute per IP (`RATE_LIMIT_PER_MINUTE`); `/health` is exempt | 429 `RATE_LIMITED` with `Retry-After`. The client IP comes from `X-Forwarded-For` only when `TRUST_PROXY_HEADERS=true`. |
-| Teaching views | Up to 10,000 tokens and 20,000 AST nodes are returned | The caps apply **only** to the `tokens` and `ast` fields. Analysis, diagnostics and `statistics` always cover the full input. Beyond the caps, `truncated.tokens` and `truncated.ast` are true, the token list is cut off and `ast` is `null`. |
+| Teaching views | Up to 10,000 tokens, and an AST of up to 20,000 nodes and 400 levels deep, are returned | The caps apply **only** to the `tokens` and `ast` fields. Analysis, diagnostics and `statistics` always cover the full input. Beyond the caps, `truncated.tokens` and `truncated.ast` are true, the token list is cut off and `ast` is `null`. |
 
 - **Failures:** a malformed request never crashes the service. Stack traces are never returned. The client gets a safe error with the `analysis_id`, and the details are logged server-side under that ID.
 - **Logging:** full source code is never logged, only its byte length and SHA-256 hash.
@@ -490,10 +491,12 @@ Unknown extra top-level fields are ignored.
   - `lines` is the number of source lines.
   - `duration_ms` is the analysis time in the worker, excluding any queue wait.
   - All counts cover the **full input**. `tokens` counts every token, even when the `tokens` view is truncated.
+  - `variables` and `functions` come from the symbol table, so they are 0 when the semantic stage is skipped.
 - `tokens` are returned even when lexing fails (the tokens scanned so far).
 - `ast` is `null` unless the syntax stage passed.
 - `symbols` is `null` unless the semantic stage ran.
-- AST node `label` is human-readable (e.g. `BinaryOp +`, `Identifier x`, `IntLiteral 10`).
+- AST node `label` is human-readable (e.g. `BinaryOp +`, `Identifier x`, `IntLiteral 10`). `role` names the parts of `if`, `while` and `for` nodes (`condition`, `then`, `else`, `init`, `update`, `body`) and is `null` elsewhere.
+- The optimizer stage reports `passed` whenever it runs, even with OPT-CONSTEXPR turned off.
 
 ### 8.3 Error envelope
 
@@ -713,3 +716,5 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 57 | Timeout via a pool of long-lived worker processes (`pebble`), killed and replaced on timeout; pool size = concurrency limit | §3.16, NFR-PERF-04 | **Amended 2026-10-16** |
 | 58 | `CORS_ORIGINS` defaults to the local Vite dev server so a fresh clone works without configuration | §8.4 | Phase 1 (2026-10-16) |
 | 59 | Panic-mode refinements: skip `{ … }` groups whole; assume a missing `;` at a line end | §4 | Phase 3 (2026-10-16) |
+| 60 | Each diagnostic carries its `stage` | §3.9, §8.2 | Phase 5 (2026-10-16) |
+| 61 | AST view also capped at 400 levels deep; AST nodes carry a `role` | §7, §8.2 | Phase 5 (2026-10-16) |
