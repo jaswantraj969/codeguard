@@ -36,7 +36,7 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [x] One diagnostic per declaration (SEM-DUP › SEM-SHADOW › SEM-UNUSED); rule toggles
 - [x] Known-library list (`backend/data/known_library_functions.json`)
 - [x] Positive and negative tests per rule (203 semantic tests)
-- [ ] Deployment must run from source or an editable install so `backend/data/` is found (or set `CODEGUARD_DATA_DIR`)
+- [x] Deployment uses an editable install so `backend/data/` is found (`render.yaml`)
 
 ## Phase 5: optimizer and report
 - [x] OPT-CONSTEXPR (maximal literal-only expressions; skips SEM-CONSTCOND conditions and division by zero)
@@ -60,8 +60,9 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [ ] Check the real Monaco editor in a browser: the automated browser could not open localhost here
 
 ## Phase 8: acceptance and deploy prep
-- [ ] TC-01–TC-36 end to end
-- [ ] Load-test script
-- [ ] `render.yaml`, Vercel config
-- [ ] README and Mermaid diagram
-- [ ] Deployment checklist (no deploy)
+- [x] TC-01–TC-12 end to end through the API and real workers (`tests/test_acceptance.py`); TC-13–TC-39 in the stage suites
+- [x] Load-test script (`backend/loadtest/load_test.py`); local run meets the targets
+- [x] `render.yaml` (Render Blueprint), `frontend/vercel.json`
+- [x] README (setup, tests, configuration, deploy, limitations) and Mermaid diagrams in `docs/architecture.md`
+- [x] No-execution check: no subprocess/exec/eval/compiler calls; no parser libraries
+- [ ] Deploy (needs your go-ahead): follow the deployment checklist

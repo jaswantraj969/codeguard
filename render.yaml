@@ -1,0 +1,30 @@
+# Render Blueprint for the CodeGuard API (free tier).
+# Python comes from .python-version at the repo root (3.13.5); CI tests 3.12 and 3.13.
+# Creating the Blueprint in the Render dashboard is what deploys it; this file alone does nothing.
+services:
+  - type: web
+    name: codeguard-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    # Editable install: the analyzer reads backend/data/known_library_functions.json
+    # from the source tree.
+    buildCommand: pip install -e .
+    # One server process; it starts MAX_CONCURRENT_ANALYSES worker processes itself.
+    startCommand: uvicorn codeguard.api.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    # Deploy a new commit only after the GitHub Actions checks pass.
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: CORS_ORIGINS
+        sync: false # the Vercel URL, e.g. https://codeguard.vercel.app (asked at creation)
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      - key: ANALYSIS_TIMEOUT_SECONDS
+        value: "5"
+      - key: MAX_CONCURRENT_ANALYSES
+        value: "2"
+      - key: QUEUE_WAIT_SECONDS
+        value: "3"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"
