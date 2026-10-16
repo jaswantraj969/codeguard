@@ -12,6 +12,7 @@ services:
     buildCommand: pip install -e .
     # One server process; it starts MAX_CONCURRENT_ANALYSES worker processes itself.
     startCommand: uvicorn codeguard.api.app:app --host 0.0.0.0 --port $PORT
+    # 200 only after every worker process has completed a warm-up analysis.
     healthCheckPath: /api/v1/health
     # Deploy a new commit only after the GitHub Actions checks pass.
     autoDeployTrigger: checksPass

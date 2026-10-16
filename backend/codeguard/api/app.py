@@ -146,8 +146,13 @@ def create_app(settings: Settings | None = None, task: AnalysisTask = analyze_to
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        app.state.pool = AnalysisPool(settings, task)
+        pool = AnalysisPool(settings, task)
+        app.state.pool = pool
         try:
+            # Runs before uvicorn opens its socket: the server only starts
+            # accepting requests (including Render's health check) once every
+            # worker has completed a real analysis.
+            await pool.warm_up()
             yield
         finally:
             app.state.pool.close()
@@ -178,8 +183,12 @@ def create_app(settings: Settings | None = None, task: AnalysisTask = analyze_to
         )
 
     @app.get(f"{API_PREFIX}/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
+    def health(request: Request) -> JSONResponse:
+        # 200 only when the worker pool is warm; 503 makes Render keep waiting.
+        pool: AnalysisPool | None = getattr(request.app.state, "pool", None)
+        if pool is None or not pool.ready:
+            return JSONResponse({"status": "starting"}, status_code=503)
+        return JSONResponse({"status": "ok"})
 
     @app.post(
         f"{API_PREFIX}/analyze",

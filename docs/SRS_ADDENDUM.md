@@ -434,7 +434,11 @@ FastAPI, Python 3.12+, Pydantic v2. All bodies are JSON.
 
 ### 8.1 `GET /api/v1/health`
 
-Response 200: `{"status": "ok"}`. The frontend calls this on load to wake the server.
+Response 200 `{"status": "ok"}` only once the worker pool is ready. Before that it is 503 `{"status": "starting"}`.
+
+- **Startup:** before the server accepts any connection, startup sends warm-up analyses until every worker process has completed a real analysis. If that doesn't happen within 120 s, startup fails, and Render reports the deploy as failed instead of routing traffic to it.
+- **Effect on cold starts:** a cold start therefore never sends requests, or Render's health check, to a pool that isn't ready.
+- **Frontend:** the frontend calls this endpoint on load to wake the server.
 
 ### 8.2 `POST /api/v1/analyze`
 
@@ -723,3 +727,4 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 61 | AST view also capped at 400 levels deep; AST nodes carry a `role` | §7, §8.2 | Phase 5 (2026-10-16) |
 | 62 | `source` that cannot be encoded as UTF-8 is 400 `INVALID_REQUEST`; rate limiting uses the right-most `X-Forwarded-For` entry; workers use the `spawn` start method on every platform | §7, §8.3 | Phase 6 (2026-10-16) |
 | 63 | Frontend-only codes `NETWORK_ERROR` and `UNEXPECTED_RESPONSE`; Monaco lazy-loaded; stale-results notice | §9 | Phase 7 (2026-10-16) |
+| 64 | `/health` is 200 only after every worker has completed a warm-up analysis (503 `starting` before) | §8.1 | Pre-deploy (2026-10-16) |
