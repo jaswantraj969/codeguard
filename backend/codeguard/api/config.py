@@ -5,8 +5,12 @@ from dataclasses import dataclass
 
 DEFAULT_CORS_ORIGINS = "http://localhost:5173"
 
-MAX_SOURCE_BYTES = 512_000
-MAX_BODY_BYTES = 3_200_000
+DEFAULT_MAX_SOURCE_BYTES = 512_000
+
+# JSON can escape one source byte as a six-character unicode escape, so a body
+# this large can always carry a source at the limit; 64 KiB covers the rest.
+JSON_ESCAPE_FACTOR = 6
+ENVELOPE_ALLOWANCE_BYTES = 65_536
 
 
 def _parse_origins(raw: str) -> tuple[str, ...]:
@@ -45,6 +49,12 @@ class Settings:
     queue_wait_seconds: float = 3.0
     rate_limit_per_minute: int = 30  # 0 disables rate limiting
     trust_proxy_headers: bool = False
+    max_source_bytes: int = DEFAULT_MAX_SOURCE_BYTES  # UTF-8 bytes of the `source` field
+
+    @property
+    def max_body_bytes(self) -> int:
+        """Request bodies above this are refused before JSON parsing (addendum §7)."""
+        return self.max_source_bytes * JSON_ESCAPE_FACTOR + ENVELOPE_ALLOWANCE_BYTES
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -55,4 +65,5 @@ class Settings:
             queue_wait_seconds=_env_number("QUEUE_WAIT_SECONDS", 3.0, float, 0.0),
             rate_limit_per_minute=_env_number("RATE_LIMIT_PER_MINUTE", 30, int, 0),
             trust_proxy_headers=_env_bool("TRUST_PROXY_HEADERS", False),
+            max_source_bytes=_env_number("MAX_SOURCE_BYTES", DEFAULT_MAX_SOURCE_BYTES, int, 1),
         )

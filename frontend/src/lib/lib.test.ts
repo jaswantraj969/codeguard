@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { EXAMPLES, SRS_DEMO } from './examples'
-import { MAX_SOURCE_BYTES, formatBytes, isCFileName, utf8ByteLength } from './limits'
+import { formatBytes, isCFileName, utf8ByteLength } from './limits'
 
 describe('limits', () => {
-  it('matches the API limit of 512,000 bytes', () => {
-    expect(MAX_SOURCE_BYTES).toBe(512_000)
-  })
-
   it('counts UTF-8 bytes, not characters', () => {
     expect(utf8ByteLength('abc')).toBe(3)
     expect(utf8ByteLength('é')).toBe(2)

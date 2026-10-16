@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from codeguard.api.config import MAX_SOURCE_BYTES
+from codeguard.api.config import DEFAULT_MAX_SOURCE_BYTES as MAX_SOURCE_BYTES
 from tests.api_helpers import ANALYZE, analyze_body, api_client, error_of
 
 

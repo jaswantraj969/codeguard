@@ -410,8 +410,8 @@ This is a semantic **constraint check**, not a syntax error. The code matches th
 
 | Limit | Value | Behaviour |
 |---|---|---|
-| Source size | ≤ 512,000 bytes of the `source` field encoded as UTF-8 (not counting the JSON envelope) | The frontend checks it first, and the API enforces it with 413 `INPUT_TOO_LARGE`. Exactly 512,000 bytes is accepted. |
-| Request body | ≤ 3,200,000 bytes | Rejected with 413 before JSON parsing. This cap is high enough that a valid 512,000-byte source can never hit it, even when every character is JSON-escaped. |
+| Source size | ≤ `MAX_SOURCE_BYTES` bytes of the `source` field encoded as UTF-8, not counting the JSON envelope. **Configurable**; the default is 512,000. | The API enforces it with 413 `INPUT_TOO_LARGE`. A source exactly at the limit is accepted. The frontend reads the limit from `GET /api/v1/config` and checks it first, so the two never disagree and the limit can be lowered on the server without a code change. |
+| Request body | ≤ 6 × the source limit + 65,536 bytes (3,137,536 by default) | Rejected with 413 before JSON parsing. JSON escapes at most 6 bytes per source byte, so a valid source at the limit can never hit this cap. |
 | Statement nesting | Depth ≤ 64. A function body is level 1, and each further `{ }` block counts as one level, and so does each braceless `if`/`else`/`while`/`for` body. An `else if` link does **not** add a level. | 65 levels give `NESTING_TOO_DEEP` |
 | Parenthesis nesting | Depth ≤ 64 within one expression. Grouping and call parentheses both count, and this is counted separately from statement nesting. | 65 levels give `NESTING_TOO_DEEP` |
 | Chains | `else if` chains, unary prefix chains and chained assignments: ≤ 256 links each. They are parsed iteratively (§4.1). | 257 links give `NESTING_TOO_DEEP` |
@@ -440,6 +440,10 @@ Response 200 `{"status": "ok"}` only once the worker pool is ready. Before that 
 - **Effect on cold starts:** a cold start therefore never sends requests, or Render's health check, to a pool that isn't ready.
 - **Frontend:** the frontend calls this endpoint on load to wake the server.
 
+### 8.1b `GET /api/v1/config`
+
+Response 200: `{"max_source_bytes": 512000}`. These are the limits the frontend enforces before sending, taken from the server's settings, so the two can't drift apart.
+
 ### 8.2 `POST /api/v1/analyze`
 
 **Request**
@@ -451,7 +455,7 @@ Response 200 `{"status": "ok"}` only once the worker pool is ready. Before that 
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `language` | string | yes | Must be exactly `"c"` |
-| `source` | string | yes | ≤ 512,000 UTF-8 bytes, not empty or whitespace-only |
+| `source` | string | yes | At most `MAX_SOURCE_BYTES` UTF-8 bytes (default 512,000), not empty or whitespace-only |
 | `rules` | object of rule ID → boolean | no | Only SEM-\* and OPT-\* IDs, except SEM-BREAK-CONTEXT. An unknown, structural or always-on ID gives 400. Rules that are left out stay on. |
 
 Unknown extra top-level fields are ignored.
@@ -512,7 +516,7 @@ Unknown extra top-level fields are ignored.
 |---|---|---|
 | Malformed JSON, schema error, invalid `rules`, or a `source` that is not valid Unicode (e.g. a lone surrogate escape) | 400 | `INVALID_REQUEST`. A custom handler is needed, because FastAPI returns 422 by default. Messages never echo the submitted input. |
 | Empty or whitespace-only source | 400 | `INPUT_EMPTY` |
-| Source over 512,000 bytes, or body over 3,200,000 bytes | 413 | `INPUT_TOO_LARGE` |
+| Source over `MAX_SOURCE_BYTES`, or body over the body cap (§7) | 413 | `INPUT_TOO_LARGE` |
 | `language` is not `"c"` | 422 | `UNSUPPORTED_LANGUAGE` |
 | Too many requests from one IP | 429 | `RATE_LIMITED` |
 | Analysis exceeded the timeout | 503 | `ANALYSIS_TIMEOUT` |
@@ -540,6 +544,7 @@ The checks run in this order, so the cheapest rejections come first:
 | `RATE_LIMIT_PER_MINUTE` | 30 | Per-IP analyses per minute (0 disables) |
 | `TRUST_PROXY_HEADERS` | false | Use `X-Forwarded-For` for the client IP (set to true on Render) |
 | `CORS_ORIGINS` | `http://localhost:5173` (the Vite dev server) | Comma-separated allowed origins; set it to the deployed frontend URL in production |
+| `MAX_SOURCE_BYTES` | 512000 | Maximum source size in UTF-8 bytes; published to the frontend by `GET /api/v1/config` |
 | `VITE_API_URL` (frontend) | `http://localhost:8000` | API base URL |
 
 ## 9. Frontend (Vite + React + TypeScript)
@@ -547,7 +552,8 @@ The checks run in this order, so the cheapest rejections come first:
 - **Editor.** Monaco, bundled locally (no CDN), so offline lab demos work.
 - **Toolbar.**
   - Analyze and Clear.
-  - Upload `.c`: any other file type is rejected with `INPUT_UNSUPPORTED_TYPE`, and the 512,000-byte size check runs before sending.
+  - Upload `.c`: any other file type is rejected with `INPUT_UNSUPPORTED_TYPE`.
+  - The size check uses the limit from `GET /api/v1/config`, never a hard-coded value, and runs before sending typed or uploaded code. The editor hint shows the limit. If the config can't be loaded, the browser skips its own check and the API's 413 is shown instead.
   - An Examples menu. One example is the SRS demo: an unused variable plus `if (10 > 5)`.
 - **Stage status bar.** The four stages, each shown as passed, failed or skipped with an icon and a text label.
 - **Diagnostics.**
@@ -587,8 +593,8 @@ The checks run in this order, so the cheapest rejections come first:
 | TC-06 | Statement after `return` | SEM-UNREACH warning |
 | TC-07 | `if (10 > 5)` | SEM-CONSTCOND warning only |
 | TC-08 | `10 + 20` | OPT-CONSTEXPR suggestion "30" |
-| TC-09 | Source of exactly 512,000 bytes | 200 |
-| TC-10 | Source of 512,001 bytes | 413 `INPUT_TOO_LARGE` |
+| TC-09 | Source exactly at the configured limit (512,000 bytes by default) | 200 |
+| TC-10 | Source one byte over the configured limit | 413 `INPUT_TOO_LARGE` |
 | TC-11 | Malformed API JSON | 400 `INVALID_REQUEST` |
 | TC-12 | 20 concurrent small analyses | All return 200; P95 ≤ 2 s, P99 ≤ 5 s on a warm server |
 
@@ -696,7 +702,7 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 30 | Wake-up message | — | **New UI-11 (Must)** |
 | 31 | Tab-trap hint for Monaco | UI-08 | Clarified |
 | 32 | Monaco bundled locally | §2.3, §2.5 | Clarified: no CDN |
-| 33 | Size limit is 512,000 UTF-8 bytes of `source` | FR-INPUT-04, NFR-PERF-03, §2.6 | "500 KB" defined |
+| 33 | Size limit is 512,000 UTF-8 bytes of `source` by default, configurable (row 65) | FR-INPUT-04, NFR-PERF-03, §2.6 | "500 KB" defined |
 | 34 | Health endpoint | §3.15 | **New** `GET /api/v1/health` |
 | 35 | `analysis_id` is a per-request trace UUID, never stored | §3.15, §6 | Clarified |
 | 36 | Timeout returns 503, enforced with a worker process | §3.16 | **408 → 503** `ANALYSIS_TIMEOUT` |
@@ -728,3 +734,4 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 62 | `source` that cannot be encoded as UTF-8 is 400 `INVALID_REQUEST`; rate limiting uses the right-most `X-Forwarded-For` entry; workers use the `spawn` start method on every platform | §7, §8.3 | Phase 6 (2026-10-16) |
 | 63 | Frontend-only codes `NETWORK_ERROR` and `UNEXPECTED_RESPONSE`; Monaco lazy-loaded; stale-results notice | §9 | Phase 7 (2026-10-16) |
 | 64 | `/health` is 200 only after every worker has completed a warm-up analysis (503 `starting` before) | §8.1 | Pre-deploy (2026-10-16) |
+| 65 | Source size limit configurable with `MAX_SOURCE_BYTES` (default 512,000); body cap derived from it; new `GET /api/v1/config`; the frontend reads the limit from it instead of hard-coding it | FR-INPUT-04, NFR-PERF-03, §7, §8, §9 | Pre-deploy (2026-10-16) |

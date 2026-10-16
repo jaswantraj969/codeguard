@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 import type { AnalysisReport } from './api/types'
 import { SRS_DEMO } from './lib/examples'
-import { MAX_SOURCE_BYTES } from './lib/limits'
 import { shownRanges } from './test/editorSpy'
 import { markupReport, mixedReport, srsDemoReport, syntaxErrorsReport } from './test/fixtures'
 import { fakeServer } from './test/server'
@@ -140,15 +139,42 @@ describe('input checks in the browser', () => {
     expect(server.analyzeBodies).toEqual([])
   })
 
-  it('reports oversized input without calling the analyzer', async () => {
-    const server = fakeServer(() => srsDemoReport())
+  it('uses the size limit from the server, counted in UTF-8 bytes', async () => {
+    // The limit is not hard-coded: the fake server says 1,000 bytes.
+    const server = fakeServer(() => srsDemoReport(), { maxSourceBytes: 1_000 })
     const { user, editor } = await renderApp()
-    fireEvent.change(editor, { target: { value: 'é'.repeat(MAX_SOURCE_BYTES / 2) + 'x' } })
+    expect(await screen.findByText(/Maximum size: 1,000 bytes\./)).toBeVisible()
+    fireEvent.change(editor, { target: { value: 'é'.repeat(500) + 'x' } })
     await user.click(screen.getByRole('button', { name: 'Analyze' }))
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'INPUT_TOO_LARGE: The source is 512,001 bytes; the limit is 512,000 bytes.',
+      'INPUT_TOO_LARGE: The source is 1,001 bytes; the limit is 1,000 bytes.',
     )
     expect(server.analyzeBodies).toEqual([])
+  })
+
+  it('leaves the size check to the API when the limit could not be loaded', async () => {
+    const server = fakeServer(
+      () => ({
+        httpStatus: 413,
+        body: {
+          error: {
+            code: 'INPUT_TOO_LARGE',
+            message: 'Source is 600,000 bytes; the limit is 512,000.',
+            analysis_id: 'id-413',
+          },
+        },
+      }),
+      { maxSourceBytes: null },
+    )
+    const { user, editor } = await renderApp()
+    await screen.findByText(/Server: online/)
+    expect(screen.queryByText(/Maximum size/)).toBeNull()
+    fireEvent.change(editor, { target: { value: 'x'.repeat(600_000) } })
+    await user.click(screen.getByRole('button', { name: 'Analyze' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'INPUT_TOO_LARGE: Source is 600,000 bytes; the limit is 512,000.',
+    )
+    expect(server.analyzeBodies).toHaveLength(1)
   })
 
   it('rejects uploads that are not .c files', async () => {
@@ -171,9 +197,10 @@ describe('input checks in the browser', () => {
   })
 
   it('rejects an oversized upload', async () => {
-    fakeServer(() => srsDemoReport())
+    fakeServer(() => srsDemoReport(), { maxSourceBytes: 1_000 })
     const { user, editor } = await renderApp()
-    await user.upload(screen.getByTestId('file-input'), new File(['x'.repeat(MAX_SOURCE_BYTES + 1)], 'big.c'))
+    await screen.findByText(/Maximum size: 1,000 bytes\./)
+    await user.upload(screen.getByTestId('file-input'), new File(['x'.repeat(1_001)], 'big.c'))
     expect(screen.getByRole('alert')).toHaveTextContent('INPUT_TOO_LARGE')
     expect(editor).toHaveValue('')
   })

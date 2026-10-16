@@ -1,4 +1,4 @@
-import type { AnalysisReport, AnalyzeResult, ApiError } from './types'
+import type { AnalysisReport, AnalyzeResult, ApiConfig, ApiError } from './types'
 
 const DEFAULT_API_URL = 'http://localhost:8000'
 
@@ -16,6 +16,21 @@ export async function checkHealth(signal?: AbortSignal): Promise<boolean> {
     return isObject(body) && body.status === 'ok'
   } catch {
     return false
+  }
+}
+
+/** The server's limits, or null if they could not be loaded. Never throws. */
+export async function fetchConfig(signal?: AbortSignal): Promise<ApiConfig | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/config`, { signal })
+    if (!response.ok) return null
+    const body: unknown = await response.json()
+    const limit = isObject(body) ? body.max_source_bytes : undefined
+    return typeof limit === 'number' && Number.isInteger(limit) && limit > 0
+      ? { max_source_bytes: limit }
+      : null
+  } catch {
+    return null
   }
 }
 

@@ -9,9 +9,12 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from codeguard.api.config import MAX_BODY_BYTES, MAX_SOURCE_BYTES
-from tests.api_helpers import ANALYZE, analyze_body, api_client, error_of
+from codeguard.api.config import DEFAULT_MAX_SOURCE_BYTES as MAX_SOURCE_BYTES
+from codeguard.api.config import Settings
+from tests.api_helpers import ANALYZE, TEST_SETTINGS, analyze_body, api_client, error_of
 from tests.c_samples import worst_case
+
+MAX_BODY_BYTES = TEST_SETTINGS.max_body_bytes
 
 VALID = "int main(void) {\n    int x = 10;\n    return x;\n}\n"
 
@@ -275,3 +278,31 @@ def test_rejected_requests_log_no_fake_source_size(
     client.post(ANALYZE, json={"language": "python", "source": "x"})
     (record,) = [r for r in caplog.records if "outcome=UNSUPPORTED_LANGUAGE" in r.getMessage()]
     assert "source=unread" in record.getMessage()
+
+
+# --- configurable size limit (MAX_SOURCE_BYTES) ----------------------------------------
+
+
+def test_config_endpoint_reports_the_limit(client: TestClient) -> None:
+    response = client.get("/api/v1/config")
+    assert response.status_code == 200
+    assert response.json() == {"max_source_bytes": MAX_SOURCE_BYTES}
+
+
+def test_a_lowered_limit_is_enforced_and_reported() -> None:
+    settings = Settings(max_concurrent_analyses=1, rate_limit_per_minute=0, max_source_bytes=1_000)
+    with api_client(settings) as client:
+        config = client.get("/api/v1/config").json()
+        at_limit = client.post(ANALYZE, json=analyze_body(sized_source(1_000)))
+        over = client.post(ANALYZE, json=analyze_body(sized_source(1_001)))
+        body_over = client.post(
+            ANALYZE,
+            content=b"{" + b" " * settings.max_body_bytes + b"}",
+            headers={"content-type": "application/json"},
+        )
+    assert config == {"max_source_bytes": 1_000}
+    assert at_limit.status_code == 200
+    assert over.status_code == 413
+    assert error_of(over)["message"] == "Source is 1,001 bytes; the limit is 1,000."
+    assert body_over.status_code == 413
+    assert settings.max_body_bytes == 1_000 * 6 + 65_536

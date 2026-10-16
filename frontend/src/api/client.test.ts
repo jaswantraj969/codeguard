@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { srsDemoReport } from '../test/fixtures'
-import { analyze, checkHealth } from './client'
+import { analyze, checkHealth, fetchConfig } from './client'
 
 function stubFetch(response: Response | Error) {
   const fetchStub = vi.fn((_url: string, _init?: RequestInit) =>
@@ -65,5 +65,28 @@ describe('checkHealth', () => {
     expect(await checkHealth()).toBe(false)
     stubFetch(new TypeError('offline'))
     expect(await checkHealth()).toBe(false)
+  })
+})
+
+describe('fetchConfig', () => {
+  it('returns the server limit', async () => {
+    const fetchStub = stubFetch(json({ max_source_bytes: 200_000 }))
+    expect(await fetchConfig()).toEqual({ max_source_bytes: 200_000 })
+    expect(fetchStub.mock.calls[0][0]).toBe('http://localhost:8000/api/v1/config')
+  })
+
+  it.each([
+    ['a missing field', json({})],
+    ['a non-integer', json({ max_source_bytes: 1.5 })],
+    ['zero', json({ max_source_bytes: 0 })],
+    ['an error status', json({ detail: 'Not Found' }, 404)],
+  ])('returns null for %s', async (_, response) => {
+    stubFetch(response)
+    expect(await fetchConfig()).toBeNull()
+  })
+
+  it('returns null when the server is unreachable', async () => {
+    stubFetch(new TypeError('offline'))
+    expect(await fetchConfig()).toBeNull()
   })
 })

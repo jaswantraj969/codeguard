@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { HEALTH_TIMEOUT_MS, checkHealth } from '../api/client'
+import { HEALTH_TIMEOUT_MS, checkHealth, fetchConfig } from '../api/client'
+import type { ApiConfig } from '../api/types'
 
 export type ServerState = 'checking' | 'waking' | 'online' | 'offline'
 
@@ -8,10 +9,12 @@ export const WAKE_MESSAGE_DELAY_MS = 2_000
 
 /**
  * Pings /health on load. A sleeping free-tier server can take about a minute to
- * start, so a slow answer shows a wake-up message instead of an error.
+ * start, so a slow answer shows a wake-up message instead of an error. Once the
+ * server is online, loads its limits from /config (null until then, or if that fails).
  */
-export function useServerStatus(): { state: ServerState; retry(): void } {
+export function useServerStatus(): { state: ServerState; config: ApiConfig | null; retry(): void } {
   const [state, setState] = useState<ServerState>('checking')
+  const [config, setConfig] = useState<ApiConfig | null>(null)
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
@@ -27,6 +30,11 @@ export function useServerStatus(): { state: ServerState; retry(): void } {
       clearTimeout(wakeTimer)
       clearTimeout(giveUpTimer)
       setState(ok ? 'online' : 'offline')
+      if (ok) {
+        fetchConfig(controller.signal).then((loaded) => {
+          if (!cancelled) setConfig(loaded)
+        })
+      }
     })
     return () => {
       cancelled = true
@@ -41,5 +49,5 @@ export function useServerStatus(): { state: ServerState; retry(): void } {
     setAttempt((n) => n + 1)
   }, [])
 
-  return { state, retry }
+  return { state, config, retry }
 }

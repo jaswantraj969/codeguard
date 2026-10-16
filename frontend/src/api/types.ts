@@ -82,6 +82,11 @@ export interface AnalysisReport {
   truncated: { tokens: boolean; ast: boolean }
 }
 
+/** GET /api/v1/config: limits the frontend checks before sending. */
+export interface ApiConfig {
+  max_source_bytes: number
+}
+
 /** The error envelope's body, plus codes the frontend raises itself. */
 export interface ApiError {
   code: string

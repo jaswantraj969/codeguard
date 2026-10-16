@@ -5,6 +5,8 @@ import type { AnalysisReport } from '../api/types'
 export interface FakeServer {
   analyzeBodies: unknown[]
   health: 'ok' | 'down' | 'hang'
+  /** What GET /api/v1/config returns; null makes it fail. */
+  maxSourceBytes: number | null
 }
 
 type AnalyzeReply = AnalysisReport | { httpStatus: number; body: unknown } | 'network-error'
@@ -19,9 +21,13 @@ function json(body: unknown, status = 200): Response {
 /** Install a fetch stub. `reply` decides the answer to each analyze request. */
 export function fakeServer(
   reply: (source: string) => AnalyzeReply,
-  options: { health?: FakeServer['health'] } = {},
+  options: { health?: FakeServer['health']; maxSourceBytes?: number | null } = {},
 ): FakeServer {
-  const server: FakeServer = { analyzeBodies: [], health: options.health ?? 'ok' }
+  const server: FakeServer = {
+    analyzeBodies: [],
+    health: options.health ?? 'ok',
+    maxSourceBytes: options.maxSourceBytes === undefined ? 512_000 : options.maxSourceBytes,
+  }
   const fetchStub = vi.fn(async (url: string, init?: RequestInit) => {
     if (url.endsWith('/api/v1/health')) {
       if (server.health === 'hang') {
@@ -31,6 +37,10 @@ export function fakeServer(
       }
       if (server.health === 'down') throw new TypeError('Failed to fetch')
       return json({ status: 'ok' })
+    }
+    if (url.endsWith('/api/v1/config')) {
+      if (server.maxSourceBytes === null) return json({ detail: 'Not Found' }, 404)
+      return json({ max_source_bytes: server.maxSourceBytes })
     }
     if (url.endsWith('/api/v1/analyze')) {
       const body = JSON.parse(String(init?.body))

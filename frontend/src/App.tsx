@@ -12,7 +12,7 @@ import TokenTable from './components/TokenTable'
 import Toolbar from './components/Toolbar'
 import { useServerStatus } from './hooks/useServerStatus'
 import type { Example } from './lib/examples'
-import { MAX_SOURCE_BYTES, formatBytes, isCFileName, utf8ByteLength } from './lib/limits'
+import { formatBytes, isCFileName, utf8ByteLength } from './lib/limits'
 
 // Monaco is large; load it separately so the page and the server ping start at once.
 const CodeEditor = lazy(() => import('./components/CodeEditor'))
@@ -23,10 +23,10 @@ function summary(report: AnalysisReport): string {
   return `Analysis complete: ${plural(errors, 'error')}, ${plural(warnings, 'warning')}, ${plural(suggestions, 'suggestion')}.`
 }
 
-function tooLarge(bytes: number): ApiError {
+function tooLarge(bytes: number, limit: number): ApiError {
   return failure(
     'INPUT_TOO_LARGE',
-    `The source is ${formatBytes(bytes)}; the limit is ${formatBytes(MAX_SOURCE_BYTES)}.`,
+    `The source is ${formatBytes(bytes)}; the limit is ${formatBytes(limit)}.`,
   ).error
 }
 
@@ -39,6 +39,8 @@ export default function App() {
   const [problem, setProblem] = useState<ApiError | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  // From the server's /config. Until it loads, the API alone enforces the limit.
+  const maxSourceBytes = server.config?.max_source_bytes ?? null
 
   function reportProblem(error: ApiError) {
     setProblem(error)
@@ -51,10 +53,12 @@ export default function App() {
       reportProblem(failure('INPUT_EMPTY', 'Write some C code or choose an example first.').error)
       return
     }
-    const bytes = utf8ByteLength(source)
-    if (bytes > MAX_SOURCE_BYTES) {
-      reportProblem(tooLarge(bytes))
-      return
+    if (maxSourceBytes !== null) {
+      const bytes = utf8ByteLength(source)
+      if (bytes > maxSourceBytes) {
+        reportProblem(tooLarge(bytes, maxSourceBytes))
+        return
+      }
     }
     setProblem(null)
     setAnalyzing(true)
@@ -85,8 +89,8 @@ export default function App() {
       )
       return
     }
-    if (file.size > MAX_SOURCE_BYTES) {
-      reportProblem(tooLarge(file.size))
+    if (maxSourceBytes !== null && file.size > maxSourceBytes) {
+      reportProblem(tooLarge(file.size, maxSourceBytes))
       return
     }
     loadSource(await file.text())
@@ -173,6 +177,7 @@ export default function App() {
             Inside the editor, Tab indents. Press <kbd>Ctrl</kbd>+<kbd>M</kbd> (on macOS{' '}
             <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>) so that Tab moves focus out instead.{' '}
             <kbd>Ctrl</kbd>+<kbd>Enter</kbd> analyzes.
+            {maxSourceBytes !== null && <> Maximum size: {formatBytes(maxSourceBytes)}.</>}
           </p>
           <Suspense fallback={<div className="code-editor editor-loading">Loading the editor…</div>}>
             <CodeEditor ref={editor} value={source} onChange={setSource} onSubmit={runAnalysis} />

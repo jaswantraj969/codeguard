@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr, ValidationError
 
-from codeguard.api.config import MAX_BODY_BYTES, MAX_SOURCE_BYTES, Settings
+from codeguard.api.config import Settings
 from codeguard.api.ratelimit import RateLimiter, retry_after_header
 from codeguard.api.worker import (
     AnalysisPool,
@@ -79,26 +79,25 @@ def describe_validation_error(error: ValidationError | RequestValidationError) -
     return f"Invalid request: {location}: {message}" if location else f"Invalid request: {message}"
 
 
-async def read_body_limited(request: Request) -> bytes:
-    """Read the body, refusing anything over MAX_BODY_BYTES before parsing it."""
+async def read_body_limited(request: Request, max_body_bytes: int) -> bytes:
+    """Read the body, refusing anything over `max_body_bytes` before parsing it."""
+    too_large = ApiError(
+        ErrorCode.INPUT_TOO_LARGE, f"The request body is larger than {max_body_bytes:,} bytes."
+    )
     declared = request.headers.get("content-length")
-    if declared is not None and declared.isdigit() and int(declared) > MAX_BODY_BYTES:
-        raise ApiError(ErrorCode.INPUT_TOO_LARGE, body_too_large_message())
+    if declared is not None and declared.isdigit() and int(declared) > max_body_bytes:
+        raise too_large
     chunks: list[bytes] = []
     size = 0
     async for chunk in request.stream():
         size += len(chunk)
-        if size > MAX_BODY_BYTES:
-            raise ApiError(ErrorCode.INPUT_TOO_LARGE, body_too_large_message())
+        if size > max_body_bytes:
+            raise too_large
         chunks.append(chunk)
     return b"".join(chunks)
 
 
-def body_too_large_message() -> str:
-    return f"The request body is larger than {MAX_BODY_BYTES:,} bytes."
-
-
-def validate_request(body: bytes) -> tuple[str, dict[str, bool]]:
+def validate_request(body: bytes, max_source_bytes: int) -> tuple[str, dict[str, bool]]:
     """Steps 3-6 of §8.3. Returns (source, rule toggles) or raises ApiError."""
     try:
         request = AnalyzeRequest.model_validate_json(body)
@@ -120,10 +119,10 @@ def validate_request(body: bytes) -> tuple[str, dict[str, bool]]:
         size = len(request.source.encode("utf-8"))
     except UnicodeEncodeError:
         raise ApiError(ErrorCode.INVALID_REQUEST, "The source is not valid Unicode text.") from None
-    if size > MAX_SOURCE_BYTES:
+    if size > max_source_bytes:
         raise ApiError(
             ErrorCode.INPUT_TOO_LARGE,
-            f"Source is {size:,} bytes; the limit is {MAX_SOURCE_BYTES:,}.",
+            f"Source is {size:,} bytes; the limit is {max_source_bytes:,}.",
         )
     if not request.source.strip():
         raise ApiError(ErrorCode.INPUT_EMPTY, "The source is empty.")
@@ -190,6 +189,11 @@ def create_app(settings: Settings | None = None, task: AnalysisTask = analyze_to
             return JSONResponse({"status": "starting"}, status_code=503)
         return JSONResponse({"status": "ok"})
 
+    @app.get(f"{API_PREFIX}/config")
+    def config() -> dict[str, int]:
+        # Limits the frontend enforces before sending, so both sides always agree.
+        return {"max_source_bytes": settings.max_source_bytes}
+
     @app.post(
         f"{API_PREFIX}/analyze",
         response_class=Response,
@@ -212,8 +216,8 @@ def create_app(settings: Settings | None = None, task: AnalysisTask = analyze_to
                     "Too many analyses from this address. Please wait and try again.",
                     {"Retry-After": retry_after_header(wait)},
                 )
-            body = await read_body_limited(request)
-            source, toggles = validate_request(body)
+            body = await read_body_limited(request, settings.max_body_bytes)
+            source, toggles = validate_request(body, settings.max_source_bytes)
             text = await request.app.state.pool.run(source, toggles, analysis_id)
         except ApiError as error:
             log_request(analysis_id, source, error.code.value, started)

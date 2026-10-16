@@ -29,3 +29,6 @@ services:
         value: "3"
       - key: RATE_LIMIT_PER_MINUTE
         value: "30"
+      # Lower this if large inputs time out on the free tier; the frontend follows it.
+      - key: MAX_SOURCE_BYTES
+        value: "512000"

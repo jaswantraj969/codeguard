@@ -1,6 +1,7 @@
-/** Same limit as the API (SRS addendum §7): bytes of UTF-8, not characters. */
-export const MAX_SOURCE_BYTES = 512_000
+// The size limit itself comes from the API (GET /api/v1/config), so the browser
+// and the server always agree; it is configurable on the server (MAX_SOURCE_BYTES).
 
+/** Size as the API measures it: bytes of UTF-8, not characters. */
 export function utf8ByteLength(text: string): number {
   return new TextEncoder().encode(text).length
 }

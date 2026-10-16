@@ -129,6 +129,7 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         "QUEUE_WAIT_SECONDS",
         "RATE_LIMIT_PER_MINUTE",
         "TRUST_PROXY_HEADERS",
+        "MAX_SOURCE_BYTES",
     ):
         monkeypatch.delenv(name, raising=False)
     assert Settings.from_env() == Settings()
@@ -139,6 +140,7 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         queue_wait_seconds=3.0,
         rate_limit_per_minute=30,
         trust_proxy_headers=False,
+        max_source_bytes=512_000,
     )
 
 
@@ -148,7 +150,9 @@ def test_settings_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("QUEUE_WAIT_SECONDS", "0")
     monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "0")
     monkeypatch.setenv("TRUST_PROXY_HEADERS", "true")
+    monkeypatch.setenv("MAX_SOURCE_BYTES", "200000")
     settings = Settings.from_env()
+    assert settings.max_source_bytes == 200_000
     assert (
         settings.analysis_timeout_seconds,
         settings.max_concurrent_analyses,
@@ -167,6 +171,8 @@ def test_settings_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
         ("MAX_CONCURRENT_ANALYSES", "1.5"),
         ("RATE_LIMIT_PER_MINUTE", "-1"),
         ("TRUST_PROXY_HEADERS", "maybe"),
+        ("MAX_SOURCE_BYTES", "0"),
+        ("MAX_SOURCE_BYTES", "512KB"),
     ],
 )
 def test_invalid_settings_fail_at_startup(

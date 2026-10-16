@@ -92,6 +92,7 @@ It reports P50, P95 and P99 latency for 20 concurrent small requests and for 1 K
 | `QUEUE_WAIT_SECONDS` | `3` | How long a request waits for a free worker before a 503 |
 | `RATE_LIMIT_PER_MINUTE` | `30` | Analyses per minute per client IP (`0` turns it off) |
 | `TRUST_PROXY_HEADERS` | `false` | Take the client IP from `X-Forwarded-For` (set `true` behind Render's proxy) |
+| `MAX_SOURCE_BYTES` | `512000` | Maximum source size in UTF-8 bytes. The frontend reads it from `GET /api/v1/config`, so changing it on the server is enough |
 | `CODEGUARD_DATA_DIR` | `backend/data` | Where `known_library_functions.json` lives |
 
 **Frontend** (set at build time):
@@ -137,11 +138,11 @@ CodeGuard V1 analyzes a teaching subset of C. These are known limits; the full l
 - **No type checking:** mismatched types, wrong argument counts and return types aren't checked.
 - **No flow analysis:** unreachable code is detected only after `return`/`break`/`continue` in the same block, and uninitialized variables aren't detected.
 - **Size and nesting limits:**
-  - 512,000 bytes of source.
+  - 512,000 bytes of source by default (configurable with `MAX_SOURCE_BYTES`).
   - 64 levels of nested statements, and 64 levels of parentheses.
   - 256 links in an `else if`, unary or assignment chain.
   - The token view shows at most 10,000 tokens. The syntax-tree view is hidden above 20,000 nodes or 400 levels.
-- **Performance on the free tier:** Render's free tier has little CPU, so very large inputs may hit the 5 s timeout there. Run the load test against the deployed API to measure this.
+- **Performance on the free tier:** Render's free tier has little CPU, so very large inputs may hit the 5 s timeout there. Run the load test against the deployed API to measure this, and lower `MAX_SOURCE_BYTES` if needed.
 - **One file at a time.** Identifiers must be ASCII.
 
 ## Project layout
