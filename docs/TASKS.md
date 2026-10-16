@@ -23,10 +23,11 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [x] LEX-* errors and tests (147 lexer tests; 512,000-byte file lexes in ~0.3 s)
 
 ## Phase 3: parser
-- [ ] AST nodes
-- [ ] Recursive-descent parser, panic-mode recovery (max 20)
-- [ ] UNSUPPORTED_CONSTRUCT and NESTING_TOO_DEEP
-- [ ] Parser tests
+- [x] AST nodes with iterative `walk` / `walk_postorder` / `depth`
+- [x] Recursive-descent parser: iterative operator precedence and chains; panic-mode recovery (max 20)
+- [x] UNSUPPORTED_CONSTRUCT and NESTING_TOO_DEEP
+- [x] Parser tests (161), including the TC-38 worst case under a 500-frame budget (uses ~460)
+- [ ] TC-38 in the real worker process (Phase 6)
 
 ## Phase 4: semantics
 - [ ] Symbol table and scopes; resolver
@@ -39,6 +40,7 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [ ] OPT-CONSTEXPR
 - [ ] Report builder: statuses, statistics, policy, sorting, toggles
 - [ ] Token, AST and symbol serialization; `analyze()` entry point
+- [ ] Serialize the AST iteratively and keep the worker result shallow: a long `1 + 1 + …` chain makes a very deep AST, and `json`/`pickle` recurse
 
 ## Phase 6: API
 - [ ] Validation, error envelope, 400 handler

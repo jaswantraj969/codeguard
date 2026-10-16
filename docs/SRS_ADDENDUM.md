@@ -219,7 +219,9 @@ input validation → lexer → parser → symbol table + semantic rules → opti
    2. skips tokens until it reaches a `;` (which it consumes) or a `}` (which it leaves for the enclosing block), or the end of input,
    3. continues parsing from there.
 
-   It never reports a second error at the same token position. After 20 syntax-stage errors it stops, and the stage detail says "Stopped after 20 syntax errors." Syntax-stage errors are `SYN-*`, `UNSUPPORTED_CONSTRUCT` and `NESTING_TOO_DEEP`. `NESTING_TOO_DEEP` ends parsing immediately. **If there is any syntax-stage error, the semantic and optimizer stages are skipped.**
+   It never reports a second error at the same token position. Two refinements keep one mistake from causing a cascade:
+   - A `{ … }` group met while skipping is skipped as a whole, together with a `;` right after it, and ends the skip. So a broken `while (x y) { … }` header doesn't let its body's `}` close the enclosing function.
+   - A missing `;` where the statement ends at a line break, a `}` or the end of the file is reported and assumed present. No tokens are skipped, so the next statement is still parsed. After 20 syntax-stage errors it stops, and the stage detail says "Stopped after 20 syntax errors." Syntax-stage errors are `SYN-*`, `UNSUPPORTED_CONSTRUCT` and `NESTING_TOO_DEEP`. `NESTING_TOO_DEEP` ends parsing immediately. **If there is any syntax-stage error, the semantic and optimizer stages are skipped.**
 4. **Semantic stage** builds the symbol table and runs the SEM-* rules (§5).
 5. **Optimizer stage** runs OPT-CONSTEXPR. It reads SEM-CONSTCOND's results and never reports a condition that rule already reported.
 6. **Report** merges the diagnostics, applies the one-diagnostic-per-construct policy (§5.1), sorts by line, column and severity (error, then warning, then suggestion), and computes statistics.
@@ -409,9 +411,10 @@ This is a semantic **constraint check**, not a syntax error. The code matches th
 |---|---|---|
 | Source size | ≤ 512,000 bytes of the `source` field encoded as UTF-8 (not counting the JSON envelope) | The frontend checks it first, and the API enforces it with 413 `INPUT_TOO_LARGE`. Exactly 512,000 bytes is accepted. |
 | Request body | ≤ 3,200,000 bytes | Rejected with 413 before JSON parsing. This cap is high enough that a valid 512,000-byte source can never hit it, even when every character is JSON-escaped. |
-| Statement nesting | Depth ≤ 64. Each `{ }` block counts as one level, and so does each braceless `if`/`else`/`while`/`for` body. An `else if` link does **not** add a level. | 65 levels give `NESTING_TOO_DEEP` |
+| Statement nesting | Depth ≤ 64. A function body is level 1, and each further `{ }` block counts as one level, and so does each braceless `if`/`else`/`while`/`for` body. An `else if` link does **not** add a level. | 65 levels give `NESTING_TOO_DEEP` |
 | Parenthesis nesting | Depth ≤ 64 within one expression. Grouping and call parentheses both count, and this is counted separately from statement nesting. | 65 levels give `NESTING_TOO_DEEP` |
 | Chains | `else if` chains, unary prefix chains and chained assignments: ≤ 256 links each. They are parsed iteratively (§4.1). | 257 links give `NESTING_TOO_DEEP` |
+| Binary operator chains | No limit: `1 + 1 + … + 1` is parsed iteratively, though its AST is as deep as the chain is long. Every pass over the AST is therefore iterative (§4.1). | — |
 | Worst case | 64 nested blocks around 64 nested parentheses, a 256-link `else if` chain and a 256-deep unary chain | Must complete in the real worker process with no `RecursionError` (TC-38) |
 | Errors per stage | 20 lexical, 20 syntax | Later errors are dropped, and the stage detail notes it |
 | Timeout | 5 s per analysis (`ANALYSIS_TIMEOUT_SECONDS`) | Analyses run in a small **pool of long-lived worker processes** (the `pebble` library), not a fresh process per request. The pool size equals the concurrency limit. A worker that times out is killed and replaced. A CPU-bound thread can't be killed, so a thread pool isn't enough. The response is 503 `ANALYSIS_TIMEOUT`. |
@@ -709,3 +712,4 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 56 | `&x` in a call argument counts as a write, so `int x; scanf("%d", &x);` alone gives SEM-UNUSED | FR-SEM-04 | **Amended 2026-10-16** (TC-35) |
 | 57 | Timeout via a pool of long-lived worker processes (`pebble`), killed and replaced on timeout; pool size = concurrency limit | §3.16, NFR-PERF-04 | **Amended 2026-10-16** |
 | 58 | `CORS_ORIGINS` defaults to the local Vite dev server so a fresh clone works without configuration | §8.4 | Phase 1 (2026-10-16) |
+| 59 | Panic-mode refinements: skip `{ … }` groups whole; assume a missing `;` at a line end | §4 | Phase 3 (2026-10-16) |
