@@ -158,7 +158,7 @@ Notes on the grammar:
 - **Function placement:** function definitions and prototypes are allowed only at file scope.
 - **Disambiguation:** after `decl_specifiers identifier`, a `(` selects a function. A `{` after the parameter list selects a definition, and a `;` selects a prototype.
 - **Assignment target:** the left side of an assignment, and the operand of `++`/`--`, must be a plain identifier. Anything else gives `SYN-MALFORMED-EXPR`.
-- **Jump placement:** `break` and `continue` outside a loop give `SYN-MISPLACED-JUMP`.
+- **Jump placement:** the grammar accepts `break` and `continue` anywhere a statement can appear. Using them outside a loop breaks a semantic constraint, not the grammar, and is reported by `SEM-BREAK-CONTEXT` (§5.3).
 
 ### 3.3 Operator precedence (highest first)
 
@@ -230,6 +230,18 @@ input validation → lexer → parser → symbol table + semantic rules → opti
 - `skipped`: the stage did not run.
 
 The optimizer can't fail, because it only emits suggestions. The UI shows syntax-stage errors separately from later warnings.
+
+### 4.1 Recursion safety
+
+Analysis must never raise a Python `RecursionError`. Raising `sys.setrecursionlimit` is **not** an accepted fix. Instead:
+
+- **Binary operators** are parsed by **precedence climbing**: one function handles all binary levels of §3.3, driven by a precedence table. A parenthesised subexpression therefore costs a few stack frames, not one per precedence level.
+- **Chains are parsed iteratively, with loops instead of recursion:**
+  - `else if` chains
+  - unary prefix chains (`- - ! x`)
+  - right-associative assignment chains (`a = b = c`): the operands are collected in a loop, then the tree is built right to left
+- **Every pass over the AST is iterative** (explicit work stack) **or provably depth-bounded.** That includes the semantic visitors, the constant folder, the optimizer and the AST serializer. Recursion is allowed only where depth is bounded by the §7 limits, and the worst-case test (TC-38) proves it.
+- The only recursion that remains in the parser is nested blocks, braceless statement bodies and parentheses, which are bounded by the nesting limits in §7.
 
 **Missing semicolon position.** A missing `;` is reported at the end of the token before it, so the line number is the line where the `;` belongs, not the line of the next token.
 
@@ -342,6 +354,15 @@ This is one merged rule that replaces SRS FR-SEM-07, FR-OPT-02 and FR-OPT-03. Th
 - **Example:** `if (10 > 5)` → the always-true message.
 - **Explanation:** "A condition that does not depend on any variable always has the same result. It is usually a typo or leftover test code."
 
+#### SEM-BREAK-CONTEXT — jump outside a loop (error)
+This is a semantic **constraint check**, not a syntax error. The code matches the grammar, but C forbids it.
+- **Fires:** a `break` or `continue` that is not inside a `while` or `for` body.
+  - It is detected by the semantic pass, which tracks loop depth. The parser may record loop depth to help, but it never reports this as a syntax error, and the syntax stage still passes.
+  - It is always on and cannot be turned off through `rules`, like the structural checks.
+- **Does not fire:** a `break` or `continue` anywhere inside a loop body, including inside nested `if` blocks.
+- **Example:** `void f(void) { break; }` → "'break' can only be used inside a loop."
+- **Explanation:** "break leaves the nearest loop and continue jumps to its next iteration, so both need an enclosing while or for loop. switch is not supported in CodeGuard V1."
+
 #### SEM-SHADOW — shadowing (warning)
 - **Fires:** a variable or parameter declaration hides a user-declared variable, parameter or function in an enclosing scope. Library names and `#define` names are not considered.
 - **Example:** a global `int x;` and a local `int x;` → "'x' hides the declaration on line 1."
@@ -373,7 +394,6 @@ This is one merged rule that replaces SRS FR-SEM-07, FR-OPT-02 and FR-OPT-03. Th
 | `SYN-UNMATCHED-PAREN` | syntax | `(` never closed, or `)` with no matching `(` |
 | `SYN-MALFORMED-EXPR` | syntax | Missing operand, invalid assignment target, and similar |
 | `SYN-UNEXPECTED-TOKEN` | syntax | Any other token that doesn't fit the grammar |
-| `SYN-MISPLACED-JUMP` | syntax | `break` or `continue` outside a loop |
 | `UNSUPPORTED_CONSTRUCT` | syntax | Any construct in §2.4 |
 | `NESTING_TOO_DEEP` | syntax | Limit in §7 exceeded |
 
@@ -389,13 +409,15 @@ This is one merged rule that replaces SRS FR-SEM-07, FR-OPT-02 and FR-OPT-03. Th
 |---|---|---|
 | Source size | ≤ 512,000 bytes of the `source` field encoded as UTF-8 (not counting the JSON envelope) | The frontend checks it first, and the API enforces it with 413 `INPUT_TOO_LARGE`. Exactly 512,000 bytes is accepted. |
 | Request body | ≤ 3,200,000 bytes | Rejected with 413 before JSON parsing. This cap is high enough that a valid 512,000-byte source can never hit it, even when every character is JSON-escaped. |
-| Nesting | Blocks and parentheses: depth ≤ 64 | Deeper input gives `NESTING_TOO_DEEP`, never a Python `RecursionError` |
-| Other recursion | Statement nesting (including `else if` chains), unary chains, chained assignment: depth ≤ 256 | Also `NESTING_TOO_DEEP` |
+| Statement nesting | Depth ≤ 64. Each `{ }` block counts as one level, and so does each braceless `if`/`else`/`while`/`for` body. An `else if` link does **not** add a level. | 65 levels give `NESTING_TOO_DEEP` |
+| Parenthesis nesting | Depth ≤ 64 within one expression. Grouping and call parentheses both count, and this is counted separately from statement nesting. | 65 levels give `NESTING_TOO_DEEP` |
+| Chains | `else if` chains, unary prefix chains and chained assignments: ≤ 256 links each. They are parsed iteratively (§4.1). | 257 links give `NESTING_TOO_DEEP` |
+| Worst case | 64 nested blocks around 64 nested parentheses, a 256-link `else if` chain and a 256-deep unary chain | Must complete in the real worker process with no `RecursionError` (TC-38) |
 | Errors per stage | 20 lexical, 20 syntax | Later errors are dropped, and the stage detail notes it |
-| Timeout | 5 s per analysis (`ANALYSIS_TIMEOUT_SECONDS`) | Each analysis runs in a worker **process**, which is terminated and replaced on timeout. A CPU-bound thread can't be killed, so a thread pool isn't enough. The response is 503 `ANALYSIS_TIMEOUT`. |
+| Timeout | 5 s per analysis (`ANALYSIS_TIMEOUT_SECONDS`) | Analyses run in a small **pool of long-lived worker processes** (the `pebble` library), not a fresh process per request. The pool size equals the concurrency limit. A worker that times out is killed and replaced. A CPU-bound thread can't be killed, so a thread pool isn't enough. The response is 503 `ANALYSIS_TIMEOUT`. |
 | Concurrency | 2 simultaneous analyses (`MAX_CONCURRENT_ANALYSES`), limited by a semaphore. The default matches the 512 MB free host. | A request waits up to 3 s (`QUEUE_WAIT_SECONDS`) for a free slot, then gets 503 `SERVICE_UNAVAILABLE` with `Retry-After`. |
 | Rate limit | 30 analyses per minute per IP (`RATE_LIMIT_PER_MINUTE`); `/health` is exempt | 429 `RATE_LIMITED` with `Retry-After`. The client IP comes from `X-Forwarded-For` only when `TRUST_PROXY_HEADERS=true`. |
-| Teaching views | Up to 10,000 tokens and 20,000 AST nodes are returned | Beyond that, `truncated.tokens` and `truncated.ast` are true. The token list is cut off, and `ast` is `null`. |
+| Teaching views | Up to 10,000 tokens and 20,000 AST nodes are returned | The caps apply **only** to the `tokens` and `ast` fields. Analysis, diagnostics and `statistics` always cover the full input. Beyond the caps, `truncated.tokens` and `truncated.ast` are true, the token list is cut off and `ast` is `null`. |
 
 - **Failures:** a malformed request never crashes the service. Stack traces are never returned. The client gets a safe error with the `analysis_id`, and the details are logged server-side under that ID.
 - **Logging:** full source code is never logged, only its byte length and SHA-256 hash.
@@ -422,7 +444,7 @@ Response 200: `{"status": "ok"}`. The frontend calls this on load to wake the se
 |---|---|---|---|
 | `language` | string | yes | Must be exactly `"c"` |
 | `source` | string | yes | ≤ 512,000 UTF-8 bytes, not empty or whitespace-only |
-| `rules` | object of rule ID → boolean | no | Only SEM-\* and OPT-\* IDs. An unknown or structural ID gives 400. Rules that are left out stay on. |
+| `rules` | object of rule ID → boolean | no | Only SEM-\* and OPT-\* IDs, except SEM-BREAK-CONTEXT. An unknown, structural or always-on ID gives 400. Rules that are left out stay on. |
 
 Unknown extra top-level fields are ignored.
 
@@ -464,6 +486,7 @@ Unknown extra top-level fields are ignored.
   - `errors`, `warnings` and `suggestions` are counted after the policy in §5.1.
   - `lines` is the number of source lines.
   - `duration_ms` is the analysis time in the worker, excluding any queue wait.
+  - All counts cover the **full input**. `tokens` counts every token, even when the `tokens` view is truncated.
 - `tokens` are returned even when lexing fails (the tokens scanned so far).
 - `ast` is `null` unless the syntax stage passed.
 - `symbols` is `null` unless the semantic stage ran.
@@ -582,8 +605,11 @@ The checks run in this order, so the cheapest rejections come first:
 | TC-32 | Response shape | `tokens`, `ast` and `symbols` present and valid |
 | TC-33 | Forced internal failure | 500 envelope without a stack trace |
 | TC-34 | `<script>` payload in a string literal | Returned as inert text; the frontend renders it as text |
-| TC-35 | `scanf("%d", &x);` | No UNSUPPORTED_CONSTRUCT; `x` counted as written |
+| TC-35 | `int x; scanf("%d", &x);` with no other use of `x` | No UNSUPPORTED_CONSTRUCT; `x` has 1 write and 0 reads; SEM-UNUSED fires on `x` |
 | TC-36 | Prototype then definition | No SEM-DUP |
+| TC-37 | `break;` outside a loop | SEM-BREAK-CONTEXT error; syntax stage passed |
+| TC-38 | Worst case run in the real worker process: 64 nested blocks around 64 nested parentheses, a 256-link `else if` chain and a 256-deep unary chain | Completes with no `RecursionError`; no `NESTING_TOO_DEEP` |
+| TC-39 | Input with more than 10,000 tokens | `tokens` view truncated with `truncated.tokens = true`; `statistics.tokens` equals the full count |
 
 Every rule also has at least one positive and one negative unit test. The frontend tests (Vitest + Testing Library) cover:
 - the editor, Analyze and Clear
@@ -602,11 +628,11 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 |---|---|
 | FR-INPUT | TC-09, TC-10, TC-29, frontend upload tests |
 | FR-LEX | TC-01, TC-13, TC-14, lexer unit tests |
-| FR-SYN | TC-01, TC-15–17, TC-27, TC-28, TC-35, TC-36, parser unit tests |
-| FR-SEM | TC-02–07, TC-18–26, rule unit tests |
+| FR-SYN | TC-01, TC-15–17, TC-27, TC-28, TC-35, TC-36, TC-38, parser unit tests |
+| FR-SEM | TC-02–07, TC-18–26, TC-35, TC-37, rule unit tests |
 | FR-OPT | TC-05, TC-08, optimizer unit tests |
-| FR-REPORT | TC-01–08, TC-32 |
-| API | TC-09–12, TC-29–33 |
+| FR-REPORT | TC-01–08, TC-32, TC-39 |
+| API | TC-09–12, TC-29–33, TC-38 |
 | NFR-PERF | TC-12, load test |
 | Security | TC-10, TC-33, TC-34, no-execution check |
 | UI | Vitest suite, manual accessibility check |
@@ -675,4 +701,10 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 48 | `&name` allowed only as a call argument (for `scanf`) | — | Decided in planning (2026-10-16) |
 | 49 | Prototypes supported; extra type words, storage classes, bitwise and comma operators unsupported | — | Decided in planning (2026-10-16) |
 | 50 | SEM-CONSTCOND moves to Member 2; serialization moves to Member 3 | §8.1 | Team allocation updated (see `CONTRIBUTING.md`) |
-| 51 | Added tests TC-13 to TC-36; traceability corrected | §9.1, §9.2 | Replaced by §10 |
+| 51 | Added tests TC-13 to TC-39; traceability corrected | §9.1, §9.2 | Replaced by §10 |
+| 52 | Recursion safety: precedence climbing; iterative chains and AST passes; worst-case test; no `setrecursionlimit` | FR-SYN-15, §2.6 | **Amended 2026-10-16** (§4.1, §7, TC-38) |
+| 53 | Nesting limits split: statements ≤ 64, parentheses ≤ 64 (counted separately), chains ≤ 256 | FR-SYN-15 | **Amended 2026-10-16** |
+| 54 | Token/AST caps apply to the teaching views only; statistics cover the full input | FR-REPORT-04, FR-REPORT-05 | **Amended 2026-10-16** (TC-39) |
+| 55 | `break`/`continue` outside a loop is the semantic constraint check SEM-BREAK-CONTEXT, not a syntax error | — | **New FR-SEM-13 (Must)**, amended 2026-10-16 (TC-37) |
+| 56 | `&x` in a call argument counts as a write, so `int x; scanf("%d", &x);` alone gives SEM-UNUSED | FR-SEM-04 | **Amended 2026-10-16** (TC-35) |
+| 57 | Timeout via a pool of long-lived worker processes (`pebble`), killed and replaced on timeout; pool size = concurrency limit | §3.16, NFR-PERF-04 | **Amended 2026-10-16** |

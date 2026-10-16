@@ -6,6 +6,7 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [x] Repo initialised; SRS copied to `docs/`
 - [x] `docs/SRS_ADDENDUM.md`: subset, EBNF, rules, pipeline, limits, API, tests, limitations, change log
 - [x] `CONTRIBUTING.md`: ownership and workflow
+- [x] Review amendments 1–6 applied (change log rows 52–57)
 - [ ] Supervisor approval of the addendum
 
 ## Phase 1: scaffold
