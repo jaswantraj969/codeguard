@@ -145,6 +145,28 @@ CodeGuard V1 analyzes a teaching subset of C. These are known limits; the full l
 - **Performance on the free tier:** Render's free tier has little CPU, so very large inputs may hit the 5 s timeout there. Run the load test against the deployed API to measure this, and lower `MAX_SOURCE_BYTES` if needed.
 - **One file at a time.** Identifiers must be ASCII.
 
+## Who owns what
+
+Each member owns their modules (see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the workflow). For the viva, each member should be able to explain these four functions: what they do, why they're written that way, and how they're tested.
+
+**Member 1: lexer, tokens, parser, AST** (`backend/codeguard/lexer/`, `parser/`, `ast/`)
+- [`_Lexer.run`](backend/codeguard/lexer/lexer.py#L196): the scanning loop. It classifies each character, skips comments and `#` lines, and keeps going after an error, up to 20 errors.
+- [`_Lexer.scan_number`](backend/codeguard/lexer/lexer.py#L312): reads a whole C number greedily, then validates it, so `08` or `123abc` becomes one clear error.
+- [`_Parser.parse_binary`](backend/codeguard/parser/parser.py#L759): operator-precedence parsing with an operand stack and an operator stack instead of one function per level, and why that keeps recursion bounded (addendum §4.1).
+- [`_Parser.synchronize`](backend/codeguard/parser/parser.py#L331) with [`parse_items`](backend/codeguard/parser/parser.py#L361): panic-mode recovery. It skips to the next `;` or `}`, skips `{ … }` groups whole, and stops after 20 errors.
+
+**Member 2: symbol table and semantic rules** (`backend/codeguard/semantic/`)
+- [`_Resolver.visit`](backend/codeguard/semantic/model.py#L276): one iterative walk that opens scopes, declares names and counts reads and writes. Be ready to explain why `x++;` is a write but `y = x++;` is also a read.
+- [`_Resolver.lookup`](backend/codeguard/semantic/model.py#L153): name resolution. It searches the scope chain, then file-wide functions, then `#define`s (visible from their line onward), then the library list.
+- [`fold`](backend/codeguard/semantic/folding.py#L115) and [`apply_binary`](backend/codeguard/semantic/folding.py#L64): constant folding with C semantics: truncating `/`, the sign of `%`, 32-bit overflow, and short-circuit `&&`/`||`.
+- [`constant_condition.check`](backend/codeguard/semantic/rules/constant_condition.py#L49) and [`apply_declaration_policy`](backend/codeguard/semantic/analyzer.py#L55): the merged SEM-CONSTCOND rule with its `while (1)` and `for (;;)` exemptions, and how one diagnostic per declaration is chosen.
+
+**Member 3: optimizer, report, API and frontend** (`backend/codeguard/optimizer/`, `report/`, `api/`, `frontend/`)
+- [`constexpr.check`](backend/codeguard/optimizer/constexpr.py#L81): finds maximal literal-only expressions, and skips conditions SEM-CONSTCOND already reported and divisions by zero.
+- [`build_report`](backend/codeguard/report/builder.py#L137): stage gating (a lexical error stops everything; a syntax error skips semantic analysis and the optimizer), plus sorting and statistics.
+- [`AnalysisPool.run`](backend/codeguard/api/worker.py#L111) and [`warm_up`](backend/codeguard/api/worker.py#L80): the semaphore and queue, killing and replacing a worker process on timeout, and the warm-up the health check waits for.
+- [`ast_to_json`](backend/codeguard/report/serialize.py#L140) and [`runAnalysis`](frontend/src/App.tsx#L50): serializing deep trees to JSON without recursion, and how the browser checks input and gets results into the panels.
+
 ## Project layout
 
 ```
