@@ -1,0 +1,29 @@
+"""API error codes (SRS addendum §8.3).
+
+This is a shared contract: changes need approval from all three members.
+"""
+
+from enum import StrEnum
+
+
+class ErrorCode(StrEnum):
+    INVALID_REQUEST = "INVALID_REQUEST"
+    INPUT_EMPTY = "INPUT_EMPTY"
+    INPUT_TOO_LARGE = "INPUT_TOO_LARGE"
+    UNSUPPORTED_LANGUAGE = "UNSUPPORTED_LANGUAGE"
+    RATE_LIMITED = "RATE_LIMITED"
+    ANALYSIS_TIMEOUT = "ANALYSIS_TIMEOUT"
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+
+
+HTTP_STATUS = {
+    ErrorCode.INVALID_REQUEST: 400,
+    ErrorCode.INPUT_EMPTY: 400,
+    ErrorCode.INPUT_TOO_LARGE: 413,
+    ErrorCode.UNSUPPORTED_LANGUAGE: 422,
+    ErrorCode.RATE_LIMITED: 429,
+    ErrorCode.ANALYSIS_TIMEOUT: 503,
+    ErrorCode.SERVICE_UNAVAILABLE: 503,
+    ErrorCode.INTERNAL_ERROR: 500,
+}

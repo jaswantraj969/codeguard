@@ -420,7 +420,7 @@ This is a semantic **constraint check**, not a syntax error. The code matches th
 | Errors per stage | 20 lexical, 20 syntax | Later errors are dropped, and the stage detail notes it |
 | Timeout | 5 s per analysis (`ANALYSIS_TIMEOUT_SECONDS`) | Analyses run in a small **pool of long-lived worker processes** (the `pebble` library), not a fresh process per request. The pool size equals the concurrency limit. A worker that times out is killed and replaced. A CPU-bound thread can't be killed, so a thread pool isn't enough. The response is 503 `ANALYSIS_TIMEOUT`. |
 | Concurrency | 2 simultaneous analyses (`MAX_CONCURRENT_ANALYSES`), limited by a semaphore. The default matches the 512 MB free host. | A request waits up to 3 s (`QUEUE_WAIT_SECONDS`) for a free slot, then gets 503 `SERVICE_UNAVAILABLE` with `Retry-After`. |
-| Rate limit | 30 analyses per minute per IP (`RATE_LIMIT_PER_MINUTE`); `/health` is exempt | 429 `RATE_LIMITED` with `Retry-After`. The client IP comes from `X-Forwarded-For` only when `TRUST_PROXY_HEADERS=true`. |
+| Rate limit | 30 analyses per minute per IP (`RATE_LIMIT_PER_MINUTE`); `/health` is exempt | 429 `RATE_LIMITED` with `Retry-After`. The client IP comes from `X-Forwarded-For` only when `TRUST_PROXY_HEADERS=true`, and then from its right-most entry (the one our proxy added; earlier entries can be spoofed). |
 | Teaching views | Up to 10,000 tokens, and an AST of up to 20,000 nodes and 400 levels deep, are returned | The caps apply **only** to the `tokens` and `ast` fields. Analysis, diagnostics and `statistics` always cover the full input. Beyond the caps, `truncated.tokens` and `truncated.ast` are true, the token list is cut off and `ast` is `null`. |
 
 - **Failures:** a malformed request never crashes the service. Stack traces are never returned. The client gets a safe error with the `analysis_id`, and the details are logged server-side under that ID.
@@ -506,7 +506,7 @@ Unknown extra top-level fields are ignored.
 
 | Condition | HTTP | Code |
 |---|---|---|
-| Malformed JSON, schema error or invalid `rules` | 400 | `INVALID_REQUEST`. A custom handler is needed, because FastAPI returns 422 by default. |
+| Malformed JSON, schema error, invalid `rules`, or a `source` that is not valid Unicode (e.g. a lone surrogate escape) | 400 | `INVALID_REQUEST`. A custom handler is needed, because FastAPI returns 422 by default. Messages never echo the submitted input. |
 | Empty or whitespace-only source | 400 | `INPUT_EMPTY` |
 | Source over 512,000 bytes, or body over 3,200,000 bytes | 413 | `INPUT_TOO_LARGE` |
 | `language` is not `"c"` | 422 | `UNSUPPORTED_LANGUAGE` |
@@ -718,3 +718,4 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 59 | Panic-mode refinements: skip `{ … }` groups whole; assume a missing `;` at a line end | §4 | Phase 3 (2026-10-16) |
 | 60 | Each diagnostic carries its `stage` | §3.9, §8.2 | Phase 5 (2026-10-16) |
 | 61 | AST view also capped at 400 levels deep; AST nodes carry a `role` | §7, §8.2 | Phase 5 (2026-10-16) |
+| 62 | `source` that cannot be encoded as UTF-8 is 400 `INVALID_REQUEST`; rate limiting uses the right-most `X-Forwarded-For` entry; workers use the `spawn` start method on every platform | §7, §8.3 | Phase 6 (2026-10-16) |

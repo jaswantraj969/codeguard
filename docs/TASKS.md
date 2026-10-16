@@ -27,7 +27,7 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [x] Recursive-descent parser: iterative operator precedence and chains; panic-mode recovery (max 20)
 - [x] UNSUPPORTED_CONSTRUCT and NESTING_TOO_DEEP
 - [x] Parser tests (161), including the TC-38 worst case under a 500-frame budget (uses ~460)
-- [ ] TC-38 in the real worker process (Phase 6)
+- [x] TC-38 in the real worker process (Phase 6)
 
 ## Phase 4: semantics
 - [x] Symbol table and scopes; iterative resolver with read/write counts
@@ -45,10 +45,11 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [x] AST serialized iteratively; the worker returns a flat string, so `pickle` never recurses
 
 ## Phase 6: API
-- [ ] Validation, error envelope, 400 handler
-- [ ] Worker-process timeout, semaphore and queue
-- [ ] CORS, logging, rate limiting
-- [ ] API tests
+- [x] Validation in the §8.3 order, error envelope, 400 handler (no input echoed)
+- [x] pebble worker pool (spawn) with timeout kill/replace, semaphore and queue
+- [x] CORS, logging (length + SHA-256 only), per-IP token-bucket rate limiting
+- [x] API tests (64): every error row, size boundaries, TC-11/12/31/33/34/38, crash recovery
+- [ ] Confirm on Render which `X-Forwarded-For` entry is the real client (Phase 8 checklist)
 
 ## Phase 7: frontend
 - [ ] Editor, toolbar, upload, examples
