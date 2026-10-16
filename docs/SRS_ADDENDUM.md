@@ -529,7 +529,7 @@ The checks run in this order, so the cheapest rejections come first:
 | `QUEUE_WAIT_SECONDS` | 3 | Maximum wait for a free slot |
 | `RATE_LIMIT_PER_MINUTE` | 30 | Per-IP analyses per minute (0 disables) |
 | `TRUST_PROXY_HEADERS` | false | Use `X-Forwarded-For` for the client IP (set to true on Render) |
-| `CORS_ORIGINS` | empty | Comma-separated allowed origins |
+| `CORS_ORIGINS` | `http://localhost:5173` (the Vite dev server) | Comma-separated allowed origins; set it to the deployed frontend URL in production |
 | `VITE_API_URL` (frontend) | `http://localhost:8000` | API base URL |
 
 ## 9. Frontend (Vite + React + TypeScript)
@@ -708,3 +708,4 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 55 | `break`/`continue` outside a loop is the semantic constraint check SEM-BREAK-CONTEXT, not a syntax error | — | **New FR-SEM-13 (Must)**, amended 2026-10-16 (TC-37) |
 | 56 | `&x` in a call argument counts as a write, so `int x; scanf("%d", &x);` alone gives SEM-UNUSED | FR-SEM-04 | **Amended 2026-10-16** (TC-35) |
 | 57 | Timeout via a pool of long-lived worker processes (`pebble`), killed and replaced on timeout; pool size = concurrency limit | §3.16, NFR-PERF-04 | **Amended 2026-10-16** |
+| 58 | `CORS_ORIGINS` defaults to the local Vite dev server so a fresh clone works without configuration | §8.4 | Phase 1 (2026-10-16) |

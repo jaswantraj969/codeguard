@@ -10,10 +10,11 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [ ] Supervisor approval of the addendum
 
 ## Phase 1: scaffold
-- [ ] Backend package skeleton, `pyproject.toml`, ruff, mypy, pytest
-- [ ] FastAPI app with `GET /api/v1/health`
-- [ ] Vite + React + TS app that calls `/health` (`VITE_API_URL`), with ESLint and Vitest
-- [ ] GitHub Actions CI (backend and frontend)
+- [x] Backend package skeleton, `pyproject.toml`, ruff, mypy, pytest
+- [x] FastAPI app with `GET /api/v1/health`, CORS from `CORS_ORIGINS`
+- [x] Vite + React + TS app that calls `/health` (`VITE_API_URL`), with ESLint and Vitest
+- [x] GitHub Actions CI (backend on Python 3.12 and 3.13; frontend lint, test, build)
+- [x] `.gitattributes` (LF), `.python-version` (3.13.5)
 
 ## Phase 2: lexer
 - [ ] Token model
