@@ -17,9 +17,10 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [x] `.gitattributes` (LF), `.python-version` (3.13.5)
 
 ## Phase 2: lexer
-- [ ] Token model
-- [ ] Lexer: keywords, operators, literals, escapes, comments, preprocessor skip, `#define`
-- [ ] LEX-* errors and tests
+- [x] Shared diagnostic model (`codeguard/diagnostics.py`)
+- [x] Token model
+- [x] Lexer: keywords, operators, literals, escapes, comments, preprocessor skip, `#define`
+- [x] LEX-* errors and tests (147 lexer tests; 512,000-byte file lexes in ~0.3 s)
 
 ## Phase 3: parser
 - [ ] AST nodes
