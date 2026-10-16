@@ -30,11 +30,13 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [ ] TC-38 in the real worker process (Phase 6)
 
 ## Phase 4: semantics
-- [ ] Symbol table and scopes; resolver
-- [ ] Constant folding
-- [ ] SEM-DUP, SEM-UNDECL, SEM-UNUSED, SEM-DIV0, SEM-UNREACH, SEM-CONSTCOND, SEM-SHADOW
-- [ ] Known-library list
-- [ ] Positive and negative tests per rule
+- [x] Symbol table and scopes; iterative resolver with read/write counts
+- [x] Constant folding (iterative, C semantics)
+- [x] SEM-DUP, SEM-UNDECL, SEM-UNUSED, SEM-DIV0, SEM-UNREACH, SEM-CONSTCOND, SEM-SHADOW, SEM-BREAK-CONTEXT
+- [x] One diagnostic per declaration (SEM-DUP › SEM-SHADOW › SEM-UNUSED); rule toggles
+- [x] Known-library list (`backend/data/known_library_functions.json`)
+- [x] Positive and negative tests per rule (203 semantic tests)
+- [ ] Deployment must run from source or an editable install so `backend/data/` is found (or set `CODEGUARD_DATA_DIR`)
 
 ## Phase 5: optimizer and report
 - [ ] OPT-CONSTEXPR

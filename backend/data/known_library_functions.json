@@ -1,0 +1,16 @@
+{
+  "_comment": "Library names that always count as declared (SRS addendum §2.3). Grouped by header for readability only; CodeGuard does not read #include lines.",
+  "functions": {
+    "stdio.h": ["printf", "scanf", "puts", "putchar", "getchar", "fprintf", "fputs", "fputc", "fgetc", "putc", "getc", "fflush"],
+    "stdlib.h": ["abs", "labs", "exit", "rand", "srand", "atoi", "atof", "malloc", "free"],
+    "math.h": ["sqrt", "pow", "fabs", "ceil", "floor", "round", "fmod", "sin", "cos", "tan", "exp", "log", "log10"],
+    "string.h": ["strlen", "strcmp", "strncmp", "strcpy", "strncpy", "strcat", "memset", "memcpy"],
+    "ctype.h": ["isdigit", "isalpha", "isalnum", "isspace", "isupper", "islower", "toupper", "tolower"],
+    "time.h": ["time"]
+  },
+  "constants": {
+    "stdio.h": ["EOF", "NULL", "stdin", "stdout", "stderr"],
+    "stdlib.h": ["RAND_MAX", "EXIT_SUCCESS", "EXIT_FAILURE"],
+    "limits.h": ["INT_MAX", "INT_MIN", "CHAR_MAX", "CHAR_MIN"]
+  }
+}

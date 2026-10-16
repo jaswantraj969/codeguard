@@ -326,7 +326,7 @@ All SEM-\* and OPT-\* rules are on by default. Each can be turned off through th
 #### SEM-DIV0 — division by zero (error)
 - **Fires:** the right operand of `/`, `%`, `/=` or `%=` is a literal zero (`0`, `0.0`, `'\0'`), or an expression that folds to zero under §5.2.
 - **Never fires:** on a plain variable, even one assigned 0. `x / y` does not fire. `const int z = 0; x / z` and `x % 0` do.
-- **Example:** `10 / 0` → "Division by zero."
+- **Example:** `10 / 0` → "Division by zero." For `%` and `%=` the message is "Remainder (%) by zero."
 - **Explanation:** "Dividing by zero is undefined in C and usually crashes the program. Check the divisor before dividing."
 
 #### SEM-UNREACH — unreachable code (warning)
@@ -367,7 +367,7 @@ This is a semantic **constraint check**, not a syntax error. The code matches th
 
 #### SEM-SHADOW — shadowing (warning)
 - **Fires:** a variable or parameter declaration hides a user-declared variable, parameter or function in an enclosing scope. Library names and `#define` names are not considered.
-- **Example:** a global `int x;` and a local `int x;` → "'x' hides the declaration on line 1."
+- **Example:** a global `int x;` and a local `int x;` → "'x' hides the variable declared on line 1." The message names what is hidden: a variable, a parameter or a function.
 - **Explanation:** "Inside this scope, the name refers to the new variable, not the outer one. This is legal but often a mistake; consider a different name."
 
 #### OPT-CONSTEXPR — constant expression (suggestion)
