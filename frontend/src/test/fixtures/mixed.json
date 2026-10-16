@@ -1,0 +1,743 @@
+{
+  "analysis_id": "fixture-mixed",
+  "status": [
+    {
+      "stage": "lexical",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "syntax",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "semantic",
+      "status": "failed",
+      "detail": null
+    },
+    {
+      "stage": "optimizer",
+      "status": "passed",
+      "detail": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "rule_id": "SEM-SHADOW",
+      "severity": "warning",
+      "stage": "semantic",
+      "message": "'total' hides the variable declared on line 1.",
+      "line": 3,
+      "column": 9,
+      "end_line": 3,
+      "end_column": 14,
+      "explanation": "Inside this scope, the name refers to the new variable, not the outer one. This is legal but often a mistake; consider a different name.",
+      "fix_hint": "Rename the inner one."
+    },
+    {
+      "rule_id": "OPT-CONSTEXPR",
+      "severity": "suggestion",
+      "stage": "optimizer",
+      "message": "'1 + 2' can be written as 3.",
+      "line": 3,
+      "column": 17,
+      "end_line": 3,
+      "end_column": 22,
+      "explanation": "This calculation uses only fixed numbers, so its result is always the same. Writing the result directly can make the code clearer; the compiler does this for you anyway.",
+      "fix_hint": "Replace with 3."
+    },
+    {
+      "rule_id": "SEM-DIV0",
+      "severity": "error",
+      "stage": "semantic",
+      "message": "Division by zero.",
+      "line": 5,
+      "column": 12,
+      "end_line": 5,
+      "end_column": 21,
+      "explanation": "Dividing by zero is undefined in C and usually crashes the program. Check the divisor before dividing.",
+      "fix_hint": "Make sure the divisor can never be zero."
+    }
+  ],
+  "statistics": {
+    "variables": 3,
+    "functions": 1,
+    "errors": 1,
+    "warnings": 1,
+    "suggestions": 1,
+    "tokens": 42,
+    "lines": 6,
+    "duration_ms": 1.0
+  },
+  "tokens": [
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "total",
+      "line": 1,
+      "column": 5
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 1,
+      "column": 10
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 2,
+      "column": 1
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "main",
+      "line": 2,
+      "column": 5
+    },
+    {
+      "type": "LPAREN",
+      "lexeme": "(",
+      "line": 2,
+      "column": 9
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "void",
+      "line": 2,
+      "column": 10
+    },
+    {
+      "type": "RPAREN",
+      "lexeme": ")",
+      "line": 2,
+      "column": 14
+    },
+    {
+      "type": "LBRACE",
+      "lexeme": "{",
+      "line": 2,
+      "column": 16
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 3,
+      "column": 5
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "total",
+      "line": 3,
+      "column": 9
+    },
+    {
+      "type": "ASSIGNMENT",
+      "lexeme": "=",
+      "line": 3,
+      "column": 15
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "1",
+      "line": 3,
+      "column": 17
+    },
+    {
+      "type": "OPERATOR",
+      "lexeme": "+",
+      "line": 3,
+      "column": 19
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "2",
+      "line": 3,
+      "column": 21
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 3,
+      "column": 22
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "for",
+      "line": 4,
+      "column": 5
+    },
+    {
+      "type": "LPAREN",
+      "lexeme": "(",
+      "line": 4,
+      "column": 9
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 4,
+      "column": 10
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "i",
+      "line": 4,
+      "column": 14
+    },
+    {
+      "type": "ASSIGNMENT",
+      "lexeme": "=",
+      "line": 4,
+      "column": 16
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "0",
+      "line": 4,
+      "column": 18
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 4,
+      "column": 19
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "i",
+      "line": 4,
+      "column": 21
+    },
+    {
+      "type": "OPERATOR",
+      "lexeme": "<",
+      "line": 4,
+      "column": 23
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "3",
+      "line": 4,
+      "column": 25
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 4,
+      "column": 26
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "i",
+      "line": 4,
+      "column": 28
+    },
+    {
+      "type": "OPERATOR",
+      "lexeme": "++",
+      "line": 4,
+      "column": 29
+    },
+    {
+      "type": "RPAREN",
+      "lexeme": ")",
+      "line": 4,
+      "column": 31
+    },
+    {
+      "type": "LBRACE",
+      "lexeme": "{",
+      "line": 4,
+      "column": 33
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "total",
+      "line": 4,
+      "column": 35
+    },
+    {
+      "type": "ASSIGNMENT",
+      "lexeme": "+=",
+      "line": 4,
+      "column": 41
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "i",
+      "line": 4,
+      "column": 44
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 4,
+      "column": 45
+    },
+    {
+      "type": "RBRACE",
+      "lexeme": "}",
+      "line": 4,
+      "column": 47
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "return",
+      "line": 5,
+      "column": 5
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "total",
+      "line": 5,
+      "column": 12
+    },
+    {
+      "type": "OPERATOR",
+      "lexeme": "/",
+      "line": 5,
+      "column": 18
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "0",
+      "line": 5,
+      "column": 20
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 5,
+      "column": 21
+    },
+    {
+      "type": "RBRACE",
+      "lexeme": "}",
+      "line": 6,
+      "column": 1
+    }
+  ],
+  "ast": {
+    "type": "TranslationUnit",
+    "label": "TranslationUnit",
+    "role": null,
+    "line": 1,
+    "column": 1,
+    "end_line": 7,
+    "end_column": 1,
+    "children": [
+      {
+        "type": "DeclStmt",
+        "label": "Declaration",
+        "role": null,
+        "line": 1,
+        "column": 1,
+        "end_line": 1,
+        "end_column": 11,
+        "children": [
+          {
+            "type": "VarDecl",
+            "label": "VarDecl total",
+            "role": null,
+            "line": 1,
+            "column": 5,
+            "end_line": 1,
+            "end_column": 10,
+            "children": [
+              {
+                "type": "TypeSpec",
+                "label": "Type int",
+                "role": null,
+                "line": 1,
+                "column": 1,
+                "end_line": 1,
+                "end_column": 4,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "FunctionDef",
+        "label": "FunctionDef main",
+        "role": null,
+        "line": 2,
+        "column": 1,
+        "end_line": 6,
+        "end_column": 2,
+        "children": [
+          {
+            "type": "TypeSpec",
+            "label": "Type int",
+            "role": null,
+            "line": 2,
+            "column": 1,
+            "end_line": 2,
+            "end_column": 4,
+            "children": []
+          },
+          {
+            "type": "Block",
+            "label": "Block",
+            "role": null,
+            "line": 2,
+            "column": 16,
+            "end_line": 6,
+            "end_column": 2,
+            "children": [
+              {
+                "type": "DeclStmt",
+                "label": "Declaration",
+                "role": null,
+                "line": 3,
+                "column": 5,
+                "end_line": 3,
+                "end_column": 23,
+                "children": [
+                  {
+                    "type": "VarDecl",
+                    "label": "VarDecl total",
+                    "role": null,
+                    "line": 3,
+                    "column": 9,
+                    "end_line": 3,
+                    "end_column": 22,
+                    "children": [
+                      {
+                        "type": "TypeSpec",
+                        "label": "Type int",
+                        "role": null,
+                        "line": 3,
+                        "column": 5,
+                        "end_line": 3,
+                        "end_column": 8,
+                        "children": []
+                      },
+                      {
+                        "type": "Binary",
+                        "label": "BinaryOp +",
+                        "role": null,
+                        "line": 3,
+                        "column": 17,
+                        "end_line": 3,
+                        "end_column": 22,
+                        "children": [
+                          {
+                            "type": "IntLiteral",
+                            "label": "IntLiteral 1",
+                            "role": null,
+                            "line": 3,
+                            "column": 17,
+                            "end_line": 3,
+                            "end_column": 18,
+                            "children": []
+                          },
+                          {
+                            "type": "IntLiteral",
+                            "label": "IntLiteral 2",
+                            "role": null,
+                            "line": 3,
+                            "column": 21,
+                            "end_line": 3,
+                            "end_column": 22,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "For",
+                "label": "For",
+                "role": null,
+                "line": 4,
+                "column": 5,
+                "end_line": 4,
+                "end_column": 48,
+                "children": [
+                  {
+                    "type": "DeclStmt",
+                    "label": "Declaration",
+                    "role": "init",
+                    "line": 4,
+                    "column": 10,
+                    "end_line": 4,
+                    "end_column": 19,
+                    "children": [
+                      {
+                        "type": "VarDecl",
+                        "label": "VarDecl i",
+                        "role": null,
+                        "line": 4,
+                        "column": 14,
+                        "end_line": 4,
+                        "end_column": 19,
+                        "children": [
+                          {
+                            "type": "TypeSpec",
+                            "label": "Type int",
+                            "role": null,
+                            "line": 4,
+                            "column": 10,
+                            "end_line": 4,
+                            "end_column": 13,
+                            "children": []
+                          },
+                          {
+                            "type": "IntLiteral",
+                            "label": "IntLiteral 0",
+                            "role": null,
+                            "line": 4,
+                            "column": 18,
+                            "end_line": 4,
+                            "end_column": 19,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Binary",
+                    "label": "BinaryOp <",
+                    "role": "condition",
+                    "line": 4,
+                    "column": 21,
+                    "end_line": 4,
+                    "end_column": 26,
+                    "children": [
+                      {
+                        "type": "Identifier",
+                        "label": "Identifier i",
+                        "role": null,
+                        "line": 4,
+                        "column": 21,
+                        "end_line": 4,
+                        "end_column": 22,
+                        "children": []
+                      },
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 3",
+                        "role": null,
+                        "line": 4,
+                        "column": 25,
+                        "end_line": 4,
+                        "end_column": 26,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "IncDec",
+                    "label": "Postfix ++",
+                    "role": "update",
+                    "line": 4,
+                    "column": 28,
+                    "end_line": 4,
+                    "end_column": 31,
+                    "children": [
+                      {
+                        "type": "Identifier",
+                        "label": "Identifier i",
+                        "role": null,
+                        "line": 4,
+                        "column": 28,
+                        "end_line": 4,
+                        "end_column": 29,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Block",
+                    "label": "Block",
+                    "role": "body",
+                    "line": 4,
+                    "column": 33,
+                    "end_line": 4,
+                    "end_column": 48,
+                    "children": [
+                      {
+                        "type": "ExprStmt",
+                        "label": "ExpressionStatement",
+                        "role": null,
+                        "line": 4,
+                        "column": 35,
+                        "end_line": 4,
+                        "end_column": 46,
+                        "children": [
+                          {
+                            "type": "Assign",
+                            "label": "Assign +=",
+                            "role": null,
+                            "line": 4,
+                            "column": 35,
+                            "end_line": 4,
+                            "end_column": 45,
+                            "children": [
+                              {
+                                "type": "Identifier",
+                                "label": "Identifier total",
+                                "role": null,
+                                "line": 4,
+                                "column": 35,
+                                "end_line": 4,
+                                "end_column": 40,
+                                "children": []
+                              },
+                              {
+                                "type": "Identifier",
+                                "label": "Identifier i",
+                                "role": null,
+                                "line": 4,
+                                "column": 44,
+                                "end_line": 4,
+                                "end_column": 45,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "Return",
+                "label": "Return",
+                "role": null,
+                "line": 5,
+                "column": 5,
+                "end_line": 5,
+                "end_column": 22,
+                "children": [
+                  {
+                    "type": "Binary",
+                    "label": "BinaryOp /",
+                    "role": null,
+                    "line": 5,
+                    "column": 12,
+                    "end_line": 5,
+                    "end_column": 21,
+                    "children": [
+                      {
+                        "type": "Identifier",
+                        "label": "Identifier total",
+                        "role": null,
+                        "line": 5,
+                        "column": 12,
+                        "end_line": 5,
+                        "end_column": 17,
+                        "children": []
+                      },
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 0",
+                        "role": null,
+                        "line": 5,
+                        "column": 20,
+                        "end_line": 5,
+                        "end_column": 21,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "symbols": {
+    "id": 0,
+    "kind": "file",
+    "name": null,
+    "line": 1,
+    "symbols": [
+      {
+        "name": "total",
+        "kind": "variable",
+        "type": "int",
+        "line": 1,
+        "column": 5,
+        "reads": 0,
+        "writes": 0
+      },
+      {
+        "name": "main",
+        "kind": "function",
+        "type": "int (void)",
+        "line": 2,
+        "column": 5,
+        "reads": 0,
+        "writes": 0
+      }
+    ],
+    "children": [
+      {
+        "id": 1,
+        "kind": "function",
+        "name": "main",
+        "line": 2,
+        "symbols": [
+          {
+            "name": "total",
+            "kind": "variable",
+            "type": "int",
+            "line": 3,
+            "column": 9,
+            "reads": 1,
+            "writes": 1
+          }
+        ],
+        "children": [
+          {
+            "id": 2,
+            "kind": "for",
+            "name": null,
+            "line": 4,
+            "symbols": [
+              {
+                "name": "i",
+                "kind": "variable",
+                "type": "int",
+                "line": 4,
+                "column": 14,
+                "reads": 2,
+                "writes": 1
+              }
+            ],
+            "children": [
+              {
+                "id": 3,
+                "kind": "block",
+                "name": null,
+                "line": 4,
+                "symbols": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "truncated": {
+    "tokens": false,
+    "ast": false
+  }
+}

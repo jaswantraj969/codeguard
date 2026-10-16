@@ -565,6 +565,9 @@ The checks run in this order, so the cheapest rejections come first:
   - A visible hint for Monaco's Tab-trapping toggle (Ctrl+M, or Ctrl+Shift+M on macOS).
 - **Wake-up message.** On load, the frontend pings `/health`. If that takes more than 2 s, it shows "Waking up the server, this can take about a minute."
 - **Error envelopes** are shown as a message along with the `analysis_id`.
+- **Frontend-only error codes.** Besides `INPUT_UNSUPPORTED_TYPE`, the browser checks `INPUT_EMPTY` and `INPUT_TOO_LARGE` itself before calling the API, and reports `NETWORK_ERROR` (server unreachable) and `UNEXPECTED_RESPONSE` (a non-JSON reply, e.g. from a proxy).
+- **Loading.** Monaco (about 2.7 MB) is loaded lazily in its own chunk, so the page and the `/health` wake-up ping start immediately. The page shell is about 240 KB (75 KB gzipped).
+- **Out-of-date results.** If the code changes after an analysis, the results panel says so until the next analysis.
 
 ## 10. Test plan
 
@@ -719,3 +722,4 @@ A script sends 20 concurrent small requests, plus inputs of 1 KB, 10 KB, 100 KB 
 | 60 | Each diagnostic carries its `stage` | §3.9, §8.2 | Phase 5 (2026-10-16) |
 | 61 | AST view also capped at 400 levels deep; AST nodes carry a `role` | §7, §8.2 | Phase 5 (2026-10-16) |
 | 62 | `source` that cannot be encoded as UTF-8 is 400 `INVALID_REQUEST`; rate limiting uses the right-most `X-Forwarded-For` entry; workers use the `spawn` start method on every platform | §7, §8.3 | Phase 6 (2026-10-16) |
+| 63 | Frontend-only codes `NETWORK_ERROR` and `UNEXPECTED_RESPONSE`; Monaco lazy-loaded; stale-results notice | §9 | Phase 7 (2026-10-16) |

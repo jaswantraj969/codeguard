@@ -4,6 +4,10 @@ import { defineConfig } from 'vitest/config'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // The lazily loaded Monaco editor chunk is about 2.7 MB by itself.
+    chunkSizeWarningLimit: 3500,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

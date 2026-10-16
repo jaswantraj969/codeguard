@@ -1,0 +1,288 @@
+{
+  "analysis_id": "fixture-markup",
+  "status": [
+    {
+      "stage": "lexical",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "syntax",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "semantic",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "optimizer",
+      "status": "passed",
+      "detail": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "rule_id": "SEM-UNUSED",
+      "severity": "warning",
+      "stage": "semantic",
+      "message": "Variable 'img' is declared but its value is never read.",
+      "line": 2,
+      "column": 9,
+      "end_line": 2,
+      "end_column": 12,
+      "explanation": "A variable whose value is never read has no effect on the program. Remove it, or use it where you meant to.",
+      "fix_hint": "Remove the variable, or use its value."
+    }
+  ],
+  "statistics": {
+    "variables": 1,
+    "functions": 1,
+    "errors": 0,
+    "warnings": 1,
+    "suggestions": 0,
+    "tokens": 15,
+    "lines": 4,
+    "duration_ms": 1.0
+  },
+  "tokens": [
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "main",
+      "line": 1,
+      "column": 5
+    },
+    {
+      "type": "LPAREN",
+      "lexeme": "(",
+      "line": 1,
+      "column": 9
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "void",
+      "line": 1,
+      "column": 10
+    },
+    {
+      "type": "RPAREN",
+      "lexeme": ")",
+      "line": 1,
+      "column": 14
+    },
+    {
+      "type": "LBRACE",
+      "lexeme": "{",
+      "line": 1,
+      "column": 16
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 2,
+      "column": 5
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "img",
+      "line": 2,
+      "column": 9
+    },
+    {
+      "type": "ASSIGNMENT",
+      "lexeme": "=",
+      "line": 2,
+      "column": 13
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "1",
+      "line": 2,
+      "column": 15
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 2,
+      "column": 16
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "return",
+      "line": 3,
+      "column": 5
+    },
+    {
+      "type": "STRING_LITERAL",
+      "lexeme": "\"<img src=x onerror=alert(1)>\"",
+      "line": 3,
+      "column": 12
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 3,
+      "column": 42
+    },
+    {
+      "type": "RBRACE",
+      "lexeme": "}",
+      "line": 4,
+      "column": 1
+    }
+  ],
+  "ast": {
+    "type": "TranslationUnit",
+    "label": "TranslationUnit",
+    "role": null,
+    "line": 1,
+    "column": 1,
+    "end_line": 5,
+    "end_column": 1,
+    "children": [
+      {
+        "type": "FunctionDef",
+        "label": "FunctionDef main",
+        "role": null,
+        "line": 1,
+        "column": 1,
+        "end_line": 4,
+        "end_column": 2,
+        "children": [
+          {
+            "type": "TypeSpec",
+            "label": "Type int",
+            "role": null,
+            "line": 1,
+            "column": 1,
+            "end_line": 1,
+            "end_column": 4,
+            "children": []
+          },
+          {
+            "type": "Block",
+            "label": "Block",
+            "role": null,
+            "line": 1,
+            "column": 16,
+            "end_line": 4,
+            "end_column": 2,
+            "children": [
+              {
+                "type": "DeclStmt",
+                "label": "Declaration",
+                "role": null,
+                "line": 2,
+                "column": 5,
+                "end_line": 2,
+                "end_column": 17,
+                "children": [
+                  {
+                    "type": "VarDecl",
+                    "label": "VarDecl img",
+                    "role": null,
+                    "line": 2,
+                    "column": 9,
+                    "end_line": 2,
+                    "end_column": 16,
+                    "children": [
+                      {
+                        "type": "TypeSpec",
+                        "label": "Type int",
+                        "role": null,
+                        "line": 2,
+                        "column": 5,
+                        "end_line": 2,
+                        "end_column": 8,
+                        "children": []
+                      },
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 1",
+                        "role": null,
+                        "line": 2,
+                        "column": 15,
+                        "end_line": 2,
+                        "end_column": 16,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "Return",
+                "label": "Return",
+                "role": null,
+                "line": 3,
+                "column": 5,
+                "end_line": 3,
+                "end_column": 43,
+                "children": [
+                  {
+                    "type": "StringLiteral",
+                    "label": "StringLiteral \"<img src=x onerror=alert(1)>\"",
+                    "role": null,
+                    "line": 3,
+                    "column": 12,
+                    "end_line": 3,
+                    "end_column": 42,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "symbols": {
+    "id": 0,
+    "kind": "file",
+    "name": null,
+    "line": 1,
+    "symbols": [
+      {
+        "name": "main",
+        "kind": "function",
+        "type": "int (void)",
+        "line": 1,
+        "column": 5,
+        "reads": 0,
+        "writes": 0
+      }
+    ],
+    "children": [
+      {
+        "id": 1,
+        "kind": "function",
+        "name": "main",
+        "line": 1,
+        "symbols": [
+          {
+            "name": "img",
+            "kind": "variable",
+            "type": "int",
+            "line": 2,
+            "column": 9,
+            "reads": 0,
+            "writes": 0
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  "truncated": {
+    "tokens": false,
+    "ast": false
+  }
+}

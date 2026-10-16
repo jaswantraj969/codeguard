@@ -1,0 +1,585 @@
+{
+  "analysis_id": "fixture-srs-demo",
+  "status": [
+    {
+      "stage": "lexical",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "syntax",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "semantic",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "stage": "optimizer",
+      "status": "passed",
+      "detail": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "rule_id": "SEM-UNUSED",
+      "severity": "warning",
+      "stage": "semantic",
+      "message": "Variable 'unused' is declared but its value is never read.",
+      "line": 5,
+      "column": 9,
+      "end_line": 5,
+      "end_column": 15,
+      "explanation": "A variable whose value is never read has no effect on the program. Remove it, or use it where you meant to.",
+      "fix_hint": "Remove the variable, or use its value."
+    },
+    {
+      "rule_id": "SEM-CONSTCOND",
+      "severity": "warning",
+      "stage": "semantic",
+      "message": "The condition is always true, so the if is unnecessary.",
+      "line": 7,
+      "column": 9,
+      "end_line": 7,
+      "end_column": 15,
+      "explanation": "A condition that does not depend on any variable always has the same result. It is usually a typo or leftover test code.",
+      "fix_hint": null
+    }
+  ],
+  "statistics": {
+    "variables": 2,
+    "functions": 1,
+    "errors": 0,
+    "warnings": 2,
+    "suggestions": 0,
+    "tokens": 35,
+    "lines": 11,
+    "duration_ms": 1.0
+  },
+  "tokens": [
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 3,
+      "column": 1
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "main",
+      "line": 3,
+      "column": 5
+    },
+    {
+      "type": "LPAREN",
+      "lexeme": "(",
+      "line": 3,
+      "column": 9
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "void",
+      "line": 3,
+      "column": 10
+    },
+    {
+      "type": "RPAREN",
+      "lexeme": ")",
+      "line": 3,
+      "column": 14
+    },
+    {
+      "type": "LBRACE",
+      "lexeme": "{",
+      "line": 3,
+      "column": 16
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 4,
+      "column": 5
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "x",
+      "line": 4,
+      "column": 9
+    },
+    {
+      "type": "ASSIGNMENT",
+      "lexeme": "=",
+      "line": 4,
+      "column": 11
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "10",
+      "line": 4,
+      "column": 13
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 4,
+      "column": 15
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "int",
+      "line": 5,
+      "column": 5
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "unused",
+      "line": 5,
+      "column": 9
+    },
+    {
+      "type": "ASSIGNMENT",
+      "lexeme": "=",
+      "line": 5,
+      "column": 16
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "50",
+      "line": 5,
+      "column": 18
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 5,
+      "column": 20
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "if",
+      "line": 7,
+      "column": 5
+    },
+    {
+      "type": "LPAREN",
+      "lexeme": "(",
+      "line": 7,
+      "column": 8
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "10",
+      "line": 7,
+      "column": 9
+    },
+    {
+      "type": "OPERATOR",
+      "lexeme": ">",
+      "line": 7,
+      "column": 12
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "5",
+      "line": 7,
+      "column": 14
+    },
+    {
+      "type": "RPAREN",
+      "lexeme": ")",
+      "line": 7,
+      "column": 15
+    },
+    {
+      "type": "LBRACE",
+      "lexeme": "{",
+      "line": 7,
+      "column": 17
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "printf",
+      "line": 8,
+      "column": 9
+    },
+    {
+      "type": "LPAREN",
+      "lexeme": "(",
+      "line": 8,
+      "column": 15
+    },
+    {
+      "type": "STRING_LITERAL",
+      "lexeme": "\"x is %d\\n\"",
+      "line": 8,
+      "column": 16
+    },
+    {
+      "type": "COMMA",
+      "lexeme": ",",
+      "line": 8,
+      "column": 27
+    },
+    {
+      "type": "IDENTIFIER",
+      "lexeme": "x",
+      "line": 8,
+      "column": 29
+    },
+    {
+      "type": "RPAREN",
+      "lexeme": ")",
+      "line": 8,
+      "column": 30
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 8,
+      "column": 31
+    },
+    {
+      "type": "RBRACE",
+      "lexeme": "}",
+      "line": 9,
+      "column": 5
+    },
+    {
+      "type": "KEYWORD",
+      "lexeme": "return",
+      "line": 10,
+      "column": 5
+    },
+    {
+      "type": "INTEGER_LITERAL",
+      "lexeme": "0",
+      "line": 10,
+      "column": 12
+    },
+    {
+      "type": "SEMICOLON",
+      "lexeme": ";",
+      "line": 10,
+      "column": 13
+    },
+    {
+      "type": "RBRACE",
+      "lexeme": "}",
+      "line": 11,
+      "column": 1
+    }
+  ],
+  "ast": {
+    "type": "TranslationUnit",
+    "label": "TranslationUnit",
+    "role": null,
+    "line": 3,
+    "column": 1,
+    "end_line": 12,
+    "end_column": 1,
+    "children": [
+      {
+        "type": "FunctionDef",
+        "label": "FunctionDef main",
+        "role": null,
+        "line": 3,
+        "column": 1,
+        "end_line": 11,
+        "end_column": 2,
+        "children": [
+          {
+            "type": "TypeSpec",
+            "label": "Type int",
+            "role": null,
+            "line": 3,
+            "column": 1,
+            "end_line": 3,
+            "end_column": 4,
+            "children": []
+          },
+          {
+            "type": "Block",
+            "label": "Block",
+            "role": null,
+            "line": 3,
+            "column": 16,
+            "end_line": 11,
+            "end_column": 2,
+            "children": [
+              {
+                "type": "DeclStmt",
+                "label": "Declaration",
+                "role": null,
+                "line": 4,
+                "column": 5,
+                "end_line": 4,
+                "end_column": 16,
+                "children": [
+                  {
+                    "type": "VarDecl",
+                    "label": "VarDecl x",
+                    "role": null,
+                    "line": 4,
+                    "column": 9,
+                    "end_line": 4,
+                    "end_column": 15,
+                    "children": [
+                      {
+                        "type": "TypeSpec",
+                        "label": "Type int",
+                        "role": null,
+                        "line": 4,
+                        "column": 5,
+                        "end_line": 4,
+                        "end_column": 8,
+                        "children": []
+                      },
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 10",
+                        "role": null,
+                        "line": 4,
+                        "column": 13,
+                        "end_line": 4,
+                        "end_column": 15,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DeclStmt",
+                "label": "Declaration",
+                "role": null,
+                "line": 5,
+                "column": 5,
+                "end_line": 5,
+                "end_column": 21,
+                "children": [
+                  {
+                    "type": "VarDecl",
+                    "label": "VarDecl unused",
+                    "role": null,
+                    "line": 5,
+                    "column": 9,
+                    "end_line": 5,
+                    "end_column": 20,
+                    "children": [
+                      {
+                        "type": "TypeSpec",
+                        "label": "Type int",
+                        "role": null,
+                        "line": 5,
+                        "column": 5,
+                        "end_line": 5,
+                        "end_column": 8,
+                        "children": []
+                      },
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 50",
+                        "role": null,
+                        "line": 5,
+                        "column": 18,
+                        "end_line": 5,
+                        "end_column": 20,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "If",
+                "label": "If",
+                "role": null,
+                "line": 7,
+                "column": 5,
+                "end_line": 9,
+                "end_column": 6,
+                "children": [
+                  {
+                    "type": "Binary",
+                    "label": "BinaryOp >",
+                    "role": "condition",
+                    "line": 7,
+                    "column": 9,
+                    "end_line": 7,
+                    "end_column": 15,
+                    "children": [
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 10",
+                        "role": null,
+                        "line": 7,
+                        "column": 9,
+                        "end_line": 7,
+                        "end_column": 11,
+                        "children": []
+                      },
+                      {
+                        "type": "IntLiteral",
+                        "label": "IntLiteral 5",
+                        "role": null,
+                        "line": 7,
+                        "column": 14,
+                        "end_line": 7,
+                        "end_column": 15,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Block",
+                    "label": "Block",
+                    "role": "then",
+                    "line": 7,
+                    "column": 17,
+                    "end_line": 9,
+                    "end_column": 6,
+                    "children": [
+                      {
+                        "type": "ExprStmt",
+                        "label": "ExpressionStatement",
+                        "role": null,
+                        "line": 8,
+                        "column": 9,
+                        "end_line": 8,
+                        "end_column": 32,
+                        "children": [
+                          {
+                            "type": "Call",
+                            "label": "Call printf",
+                            "role": null,
+                            "line": 8,
+                            "column": 9,
+                            "end_line": 8,
+                            "end_column": 31,
+                            "children": [
+                              {
+                                "type": "Identifier",
+                                "label": "Identifier printf",
+                                "role": null,
+                                "line": 8,
+                                "column": 9,
+                                "end_line": 8,
+                                "end_column": 15,
+                                "children": []
+                              },
+                              {
+                                "type": "StringLiteral",
+                                "label": "StringLiteral \"x is %d\\n\"",
+                                "role": null,
+                                "line": 8,
+                                "column": 16,
+                                "end_line": 8,
+                                "end_column": 27,
+                                "children": []
+                              },
+                              {
+                                "type": "Identifier",
+                                "label": "Identifier x",
+                                "role": null,
+                                "line": 8,
+                                "column": 29,
+                                "end_line": 8,
+                                "end_column": 30,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "Return",
+                "label": "Return",
+                "role": null,
+                "line": 10,
+                "column": 5,
+                "end_line": 10,
+                "end_column": 14,
+                "children": [
+                  {
+                    "type": "IntLiteral",
+                    "label": "IntLiteral 0",
+                    "role": null,
+                    "line": 10,
+                    "column": 12,
+                    "end_line": 10,
+                    "end_column": 13,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "symbols": {
+    "id": 0,
+    "kind": "file",
+    "name": null,
+    "line": 3,
+    "symbols": [
+      {
+        "name": "main",
+        "kind": "function",
+        "type": "int (void)",
+        "line": 3,
+        "column": 5,
+        "reads": 0,
+        "writes": 0
+      }
+    ],
+    "children": [
+      {
+        "id": 1,
+        "kind": "function",
+        "name": "main",
+        "line": 3,
+        "symbols": [
+          {
+            "name": "x",
+            "kind": "variable",
+            "type": "int",
+            "line": 4,
+            "column": 9,
+            "reads": 1,
+            "writes": 0
+          },
+          {
+            "name": "unused",
+            "kind": "variable",
+            "type": "int",
+            "line": 5,
+            "column": 9,
+            "reads": 0,
+            "writes": 0
+          }
+        ],
+        "children": [
+          {
+            "id": 2,
+            "kind": "block",
+            "name": null,
+            "line": 7,
+            "symbols": [],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "truncated": {
+    "tokens": false,
+    "ast": false
+  }
+}

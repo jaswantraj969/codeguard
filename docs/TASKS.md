@@ -52,11 +52,12 @@ The spec is [SRS_ADDENDUM.md](SRS_ADDENDUM.md). Each phase ends with all tests p
 - [ ] Confirm on Render which `X-Forwarded-For` entry is the real client (Phase 8 checklist)
 
 ## Phase 7: frontend
-- [ ] Editor, toolbar, upload, examples
-- [ ] Stage bar, diagnostics tabs, statistics
-- [ ] Token, AST and symbol views
-- [ ] Accessibility, wake-up message
-- [ ] Vitest tests
+- [x] Monaco bundled locally (lazy chunk, C language only), toolbar, upload checks, examples incl. SRS demo
+- [x] Stage bar, diagnostics tabs (syntax errors grouped separately), click-to-line, statistics
+- [x] Token table (paged), collapsible AST tree, symbol table by scope
+- [x] Accessibility (ARIA tabs, labels, focus, aria-live, Tab-trap hint), wake-up message
+- [x] Vitest tests (52) against real API fixtures (`backend/scripts/export_frontend_fixtures.py`)
+- [ ] Check the real Monaco editor in a browser: the automated browser could not open localhost here
 
 ## Phase 8: acceptance and deploy prep
 - [ ] TC-01–TC-36 end to end
