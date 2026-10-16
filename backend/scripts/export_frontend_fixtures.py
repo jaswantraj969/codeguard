@@ -50,7 +50,9 @@ def main() -> None:
     for name, source in SAMPLES.items():
         body = json.loads(build_report(source).to_json(f"fixture-{name}"))
         body["statistics"]["duration_ms"] = 1.0  # stable across runs
-        (OUT / f"{name}.json").write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
+        (OUT / f"{name}.json").write_text(
+            json.dumps(body, indent=2) + "\n", encoding="utf-8", newline="\n"
+        )
         print(f"wrote {name}.json")
 
 
